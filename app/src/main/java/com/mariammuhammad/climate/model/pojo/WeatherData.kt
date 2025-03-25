@@ -14,7 +14,7 @@ data class Root(
 
 
 data class ListItem(
-    val dt: Long,
+    val dt: Long, //date and time
     val main: Main,
     val weather: List<Weather>,
     val clouds: Clouds,
@@ -24,7 +24,7 @@ data class ListItem(
     val rain: Rain?,
     val sys: Sys,
     @SerializedName("dt_txt")
-    val dtTxt: String,
+    val dtTxt: String, //date and time string
     val snow: Snow?,
 )
 
@@ -65,11 +65,11 @@ data class Wind(
 
 data class Rain(
     @SerializedName("3h")
-    val n3h: Double,
+    val n3h: Double, //rain every 3 hours
 )
 
 data class Sys(
-    val pod: String,
+    val pod: String, //period of day
 )
 
 data class Snow(

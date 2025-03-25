@@ -12,8 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,8 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -41,9 +42,9 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.bumptech.glide.load.resource.drawable.DrawableResource
 import com.mariammuhammad.climate.R
-import com.mariammuhammad.climate.model.pojo.MyWeather
+import com.mariammuhammad.climate.model.pojo.HourlyModel
+import com.mariammuhammad.climate.model.pojo.Weather
 
 class Screens {
 
@@ -244,24 +245,78 @@ The remaining items are evenly spaced out between the first and last items, ensu
                     )
                     {
 
-                        item (items){  }
+                        items (items){ item->
+                            FutureModelViewHolder(item)
+                        }
+                    }
+                }
+
+                item {
+                    Row (modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically){
+
+                        Text(text="Future", fontSize = 20.sp,
+                            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+                            color = colorResource(R.color.off_white),
+                            modifier = Modifier.weight(1f))
+
+                        Text(text="Next 5 days", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+                            color = colorResource(R.color.off_white)
+                        )
                     }
                 }
             }
         }
 }
 }
+    @Composable
+    fun FutureModelViewHolder(model: HourlyModel){
 
-    val items= listOf(
-        MyWeather.Weather(12,"9 am","Cloudy", R.drawable.cloudy_sunny.toString()),
-                MyWeather.Weather(13,"10 am","Sunny", R.drawable.happysun.toString()),
+        Column (modifier = Modifier.width(90.dp).wrapContentHeight()
+            .padding(4.dp).background(
+                color = colorResource(R.color.background),
+                shape = RoundedCornerShape(8.dp)).padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
 
-    MyWeather.Weather(14,"11 am","Windy", R.drawable.wind.toString()),
+        ){
 
-    MyWeather.Weather(15,"12 am","Rain", R.drawable.rainy.toString()),
-            MyWeather.Weather(16,"1 pm","Storm", R.drawable.storm.toString())
+            Text(text = model.hour, color = colorResource(R.color.off_white),
+                fontSize = 16.sp, modifier = Modifier.fillMaxWidth().padding(8.dp),
+                textAlign = TextAlign.Center, fontFamily = FontFamily(Font(R.font.alfa_slab))
+            )
 
-        )
+            Image(
+                painter = painterResource(
+                    id = when (model.picPath) {
+                       "cloudy" -> R.drawable.clouds
+                        "sunny" -> R.drawable.sunny
+                        "windy" -> R.drawable.wind2
+                        "rainy" -> R.drawable.rain
+                        "stormy" -> R.drawable.storm
+                        else -> R.drawable.clouds
+                    }
+                ), contentDescription = null,
+                modifier = Modifier.size(45.dp).padding(8.dp),
+                contentScale = ContentScale.Crop)
+
+            Text(text = "${model.temp}", color = colorResource(R.color.off_white),
+                fontSize = 16.sp, modifier = Modifier.fillMaxWidth().padding(8.dp),
+                textAlign = TextAlign.Center, fontFamily = FontFamily(Font(R.font.alfa_slab))
+            )
+
+        }
+    }
+//check
+val items = listOf(
+    HourlyModel("9 am", 11, "cloudy"),  // R.drawable.cloudy_sunny
+    HourlyModel("10 am", 12, "sunny"),  // R.drawable.happysun
+    HourlyModel("11 am", 14, "windy"),  // R.drawable.wind
+    HourlyModel("12 am", 15, "rainy"),  // R.drawable.rainy
+    HourlyModel("1 am", 20, "stormy")   // R.drawable.storm
+)
+    
             @Composable
     fun WeatherDetailItem(icon: Int, value: String, label: String){
 
@@ -273,6 +328,11 @@ The remaining items are evenly spaced out between the first and last items, ensu
             )
 
             Text(text= value, fontWeight = FontWeight.Bold,
+                color = colorResource(id= R.color.off_white),
+                textAlign = TextAlign.Center
+            )
+
+            Text(text= label, fontWeight = FontWeight.Bold,
                 color = colorResource(id= R.color.off_white),
                 textAlign = TextAlign.Center
             )
