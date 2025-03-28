@@ -59,6 +59,11 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.11.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation ("com.google.code.gson:gson:2.12.1")
+    implementation(libs.play.services.location)
+
+    //splashScreen
+    implementation ("androidx.core:core-splashscreen:1.0.0")
+
 
     //Room
     val room_version = "2.6.1"
@@ -77,6 +82,10 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:$nav_version")
 //Serialization for NavArgs
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+
+    // Lifecycle dependencies
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
+
 
 
     testImplementation(libs.junit)

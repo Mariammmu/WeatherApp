@@ -1,7 +1,7 @@
 package com.mariammuhammad.climate.model.remote
 
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.WeatherItemRoot
+import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -12,30 +12,30 @@ interface WeatherService {
     suspend fun getWeatherData(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
         @Query("units") temperature: String,
         @Query("lang") language: String,
+        @Query("appid") apiKey: String="d8624de82ec00c03cb20e4952badd072"
 
 
-        ): Response<CurrentWeather> // which response we will use
+        ):CurrentWeather
+
+//    @GET("forecast")
+//    suspend fun getWeatherByCity(
+//        @Query("q")
+//        city: String,
+//        @Query("appid")
+//        appid: String = "d8624de82ec00c03cb20e4952badd072"
+//
+//    ):  Response<CurrentWeather>
 
     @GET("forecast")
-    suspend fun getWeatherByCity(
-        @Query("q")
-        city: String,
-        @Query("appid")
-        appid: String = "d8624de82ec00c03cb20e4952badd072"
-
-    ):  Response<CurrentWeather>
-
-    @GET("forecast")
-    suspend fun get5DaysEach3Hours(
+    suspend fun get5DaysEvery3Hours(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
         @Query("units") temperature: String,
         @Query("lang") language: String,
-    ): Response<WeatherItemRoot>
+        @Query("appid") apiKey: String= "d8624de82ec00c03cb20e4952badd072"
+        ): NextDaysWeather
 
 }
 

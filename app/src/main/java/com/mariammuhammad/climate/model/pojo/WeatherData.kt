@@ -47,6 +47,7 @@ data class Main(
 )
 
 data class Weather(
+    @SerializedName("value")
     val id: Long,
     val main: String,
     val description: String,
