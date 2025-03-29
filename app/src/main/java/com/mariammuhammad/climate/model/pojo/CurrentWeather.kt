@@ -5,11 +5,11 @@ import com.google.gson.annotations.SerializedName
     data class CurrentWeather(
         var weather: List<Weather>,
         @SerializedName("main") var weatherDetails: Main,
-        var wind: Wind? = null,
-        var clouds: Clouds? = null,
+        var wind: Wind,
+        var clouds: Clouds,
         var dt: Int = 0,
-        var sys: Sys? = null,
+        var sys: Sys,
         @SerializedName("name")
-        var cityName: String? = null,
+        var cityName: String?,
         var timezone: Int = 0
     )

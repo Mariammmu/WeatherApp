@@ -1,4 +1,20 @@
 <resources>
     <string name="app_name">Climate</string>
     <string name="welcome_app">Welcome to Weather App</string>
+    <string name="celsius">°C</string>
+    <string name="wind_speed">wind speed</string>
+    <string name="humidity">Humidity</string>
+    <string name="wind">Wind</string>
+    <string name="pressure">Pressure</string>
+    <string name="clouds">Clouds</string>
+    <string name="weather_state">weather state</string>
+    <string name="feels_like">Feels like</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="sunset">Sunset</string>
+    <string name="km_h">Km/h</string>
+    <string name="hpa">hPa</string>
+    <string name="home">Home</string>
+    <string name="favorites">Favorites</string>
+    <string name="alerts">Alerts</string>
+    <string name="settings">Settings</string>
 </resources>

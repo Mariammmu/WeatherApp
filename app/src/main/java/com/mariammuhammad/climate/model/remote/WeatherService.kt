@@ -2,6 +2,7 @@ package com.mariammuhammad.climate.model.remote
 
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.utiles.Constants
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -14,7 +15,7 @@ interface WeatherService {
         @Query("lon") lon: Double,
         @Query("units") temperature: String,
         @Query("lang") language: String,
-        @Query("appid") apiKey: String="d8624de82ec00c03cb20e4952badd072"
+        @Query("appid") apiKey: String= Constants.ApiKey
 
 
         ):CurrentWeather
@@ -34,7 +35,7 @@ interface WeatherService {
         @Query("lon") lon: Double,
         @Query("units") temperature: String,
         @Query("lang") language: String,
-        @Query("appid") apiKey: String= "d8624de82ec00c03cb20e4952badd072"
+        @Query("appid") apiKey: String= Constants.ApiKey
         ): NextDaysWeather
 
 }

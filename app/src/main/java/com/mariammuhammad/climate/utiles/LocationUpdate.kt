@@ -3,7 +3,9 @@ package com.mariammuhammad.climate.utiles
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.health.connect.datatypes.ExerciseRoute
 import android.location.Location
+import android.location.LocationManager
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
@@ -23,77 +25,129 @@ import com.mariammuhammad.climate.model.pojo.Coord
 //The FusedLocationProvider usa higher-level API that simplifies the process of obtaining location data
 // in Android, and it automatically selects the best available location source (GPS, Wi-Fi, etc.) based on
 // accuracy and power consumption.
-    class LocationUpdate(private val context: Context) {
+class LocationUpdate(private val context: Context) {
 
+
+    private val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
+
+//    private var lastLocation: Location? = null
+
+    //check if location is enabled (GPS or network)
+    fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager =
+            context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    // prompt the user to enable location services if they are disabled
+    fun promptEnableLocationSettings() {
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        context.startActivity(intent)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getLastLocation( onLocationAvail:(location:Location?) ->Unit ) {
+        fusedLocationClient.requestLocationUpdates(
+            LocationRequest.Builder(0).apply {  //request, callback, looper
+                setPriority(Priority.PRIORITY_LOW_POWER) //GPS
+            }.build(),
+
+            object : LocationCallback() {
+                override fun onLocationResult(location: LocationResult) {
+                    super.onLocationResult(location)
+
+                    onLocationAvail.invoke(location.lastLocation)
+                    fusedLocationClient.removeLocationUpdates(this)
+
+                }
+            },
+
+            Looper.myLooper()
+        )
+    }
+
+//
+//    // get the last known location
+//    @SuppressLint("MissingPermission")
+//    fun getCurrentLocation(location: (Location) -> Unit) {
+//        // If location is not null, invoke the callback with the location
+//        fusedLocationClient.lastLocation.addOnSuccessListener {
+//            location.invoke(it)
+//
+//        }
+//    }
+
+
+}
+
+
+/*
         private val fusedLocationClient: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(context)
 
         private lateinit var locationCallback: LocationCallback
-        private var lastLocation: Location? = null
+    //    private var lastLocation: Location? = null
 
 
         //this will keep the value of our current location
-        var currentLocation = mutableStateOf(Coord(0.0, 0.0))
+      //  var currentLocation = mutableStateOf(Coord(0.0, 0.0))
 
-        //    var locationState = mutableStateOf<LocationState>(LocationState.Loading)
 
-        init {
-            setupLocationCallback()
-        }
+//        init {
+//            setupLocationCallback()
+//        }
 
-        private fun setupLocationCallback() {
-            locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    super.onLocationResult(locationResult)
-                    val location = locationResult.locations.firstOrNull()
+//        private fun setupLocationCallback() {
+//            locationCallback = object : LocationCallback() {
+//                override fun onLocationResult(locationResult: LocationResult) {
+//                    super.onLocationResult(locationResult)
+//                    val location = locationResult.locations.firstOrNull()
+//
+//                    if (location != null && (lastLocation == null || lastLocation!!.distanceTo(location) >= 300)) {
+//                        lastLocation = location
+//                        currentLocation.value = Coord(location.latitude, location.longitude)
+//                        //30.0444° N, 31.2357°
+//
+//                        Log.d("Location", "Updated Location: $location")
+//                    }
+//                }
+//            }
+//        }
 
-                    if (location != null && (lastLocation == null || lastLocation!!.distanceTo(location) >= 300)) {
-                        lastLocation = location
-                        currentLocation.value = Coord(location.latitude, location.longitude)
-                        //30.0444° N, 31.2357°
-
-                        Log.d("Location", "Updated Location: $location")
-                    }
-                }
-            }
-        }
+    fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager =
+            context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
 
             fun promptEnableLocationSettings() {
                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                 context.startActivity(intent)
             }
 
-
             @SuppressLint("MissingPermission")
-            fun startLocationUpdates() {
-                val locationRequest = LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    10000
-                ) // 10-second interval
-                    .setMinUpdateDistanceMeters(300f) // Only update location if user moves 300 meters
-                    .build()
+            fun getCurrentLocation(location: (Location) -> Unit) { //high order function instead of creating interface
+//                val locationRequest = LocationRequest.Builder(
+//                    Priority.PRIORITY_HIGH_ACCURACY,
+//                    10000
+//                ) // 10-second interval
+//                    .setMinUpdateDistanceMeters(300f) // Only update location if user moves 300 meters
+//                    .build()
+                fusedLocationClient.lastLocation.addOnSuccessListener {
+                    location.invoke(it)
 
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.getMainLooper()
-                )
-            }
-
-            fun checkIfLocationEnabled() {
-                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
-                if (!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
-                    promptEnableLocationSettings()
-                } else {
-                    startLocationUpdates()
                 }
+
             }
 
 
-        // Function to stop location updates
-        fun stopLocationUpdates() {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-        }
+//        // Function to stop location updates
+//        fun stopLocationUpdates() {
+//            fusedLocationClient.removeLocationUpdates(locationCallback)
+//        }
 }
 
 //    @SuppressLint("MissingPermission")
@@ -112,3 +166,4 @@ import com.mariammuhammad.climate.model.pojo.Coord
 //
 
 
+*/

@@ -1,6 +1,13 @@
 package com.mariammuhammad.climate.home.view
 
+import android.app.AlertDialog
+import android.content.Context
+import android.location.LocationManager
+import android.telecom.Call.Details
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,21 +25,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -40,32 +49,114 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import android.Manifest
+import androidx.compose.runtime.LaunchedEffect
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
-import com.mariammuhammad.climate.model.pojo.Coord
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.HourlyModel
+import com.mariammuhammad.climate.model.pojo.ListItem
+import com.mariammuhammad.climate.utiles.ImageIcon
+import com.mariammuhammad.climate.utiles.LocationPermissionManager
+import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
-import com.mariammuhammad.climate.view.MainActivity
-import java.security.Permission
+import kotlinx.coroutines.coroutineScope
 
+//private fun showRationaleDialog(context: Context, permissionManager: LocationPermissionManager) {
+//    AlertDialog.Builder(context)
+//        .setMessage("We need location permission to provide weather updates based on your location.")
+//        .setPositiveButton("Grant Permission") { _, _ ->
+//            permissionManager.requestLocationPermission()
+//        }
+//        .setNegativeButton("Cancel", null)
+//        .show()
+//}
+
+//@Preview(showSystemUi = true)
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel) { //
 
+
+    var context= LocalContext.current
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
-//    val date = formatDate(currentWeatherResponse?.dt)
+    val locationUpdate= LocationUpdate(context)
+    var isLoading by rememberSaveable { mutableStateOf(true) }
+    var getData by rememberSaveable { mutableStateOf(true) }
+    var isDataShown by rememberSaveable { mutableStateOf(false) }
+    var unit by rememberSaveable { mutableStateOf("metric") }
+    var lang by rememberSaveable { mutableStateOf("en") }
+
+    val launcherActivity = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            // Permission granted, check if location services are enabled
+            if (locationUpdate.isLocationEnabled()) {
+                locationUpdate.getLastLocation { location ->
+                    // Fetch weather data after getting the location
+                    location?.let { homeViewModel.getCurrentWeather(it.latitude, location.longitude, units = unit, lang = lang) }
+                }
+            } else {
+                // Prompt user to enable location services
+                locationUpdate.promptEnableLocationSettings()
+            }
+        } else {
+            // Show message if permission is denied
+            Toast.makeText(context, "Please enable location permission.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+//    var locationPermissionManager= LocationPermissionManager(context,
+//        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),{
+//            if(it){  //1 accept the permission //is granted
+//                Toast.makeText(context, "Location permission granted", Toast.LENGTH_SHORT).show()
 //
+//                locationUpdate.getCurrentLocation {
+//                    homeViewModel.getCurrentWeather(it.latitude,it.longitude, units = "", lang="en")
+//                }
+//            }
+//            else{
+//                Toast.makeText(context, "Please enable the location.", Toast.LENGTH_SHORT).show()
+//            }
+//        }))
+
+    // Initialize LocationPermissionManager to request permission
+    val locationPermissionManager = LocationPermissionManager(
+        context)
+
+
+
+    // Check if location permission is granted and location services are enabled
+    // Check if location permission is granted and location services are enabled
+    LaunchedEffect(Unit) {  //non composable code inside a composable funstion
+        if (locationPermissionManager.isLocationPermissionGranted()) {
+            if (locationUpdate.isLocationEnabled()) {
+                locationUpdate.getLastLocation { location ->
+                    location?.let {
+                        homeViewModel.getCurrentWeather(it.latitude, it.longitude, units = unit, lang = lang)
+                    }
+                }
+            } else {
+                locationUpdate.promptEnableLocationSettings()
+            }
+        } else {
+            launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
 //    val countryName = getCountryName(currentWeatherResponse?.sys?.country)
 //
 //    val sunrise = convertUnixTimeToTime(currentWeatherResponse?.sys?.sunrise?.toLong() ?: 0)
 //    val sunset = convertUnixTimeToTime(currentWeatherResponse?.sys?.sunset?.toLong() ?: 0)
     when(currentWeather){
         is Response.Failure -> {
-
+            isLoading = false
+            if (!isDataShown) {
+                val errorMsg = (currentWeather as Response.Failure).error
+                ShowErrorMessage(errorMsg)
+            }
         }
         Response.Loading -> {
 
@@ -82,9 +173,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
             {
                 Image(
-                    painter = painterResource(id = R.drawable.weather), // Use your drawable resource
-                    contentDescription = null, // You can add description for accessibility if needed
-                    modifier = Modifier.fillMaxSize(), // Ensure the image fills the entire Box
+                    painter = painterResource(id = R.drawable.weather), // use a pic from drawable resource
+                    contentDescription = "background image",
+                    modifier = Modifier.fillMaxSize(), // to ensure the image fills the entire Box
                     contentScale = ContentScale.FillBounds
                 )
 
@@ -106,8 +197,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 textAlign = TextAlign.Center
                             )
 
+                            //Weather icon
                             GlideImage(
-                                model ="https://openweathermap.org/img/wn/${currentWeatherDetails.weather?.first()?.icon}@2x.png",// Use your drawable resource
+                                model =ImageIcon.
+                                getWeatherImage("${currentWeatherDetails.weather?.first()?.icon}@2x.png"),
                                 //icon
                                 contentDescription = null,
                                 modifier = Modifier
@@ -115,8 +208,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                     .padding(top = 8.dp)
                             )
 
+                            //Weather description
                             Text(
-                                text =currentWeatherDetails.weather?.first()?.description.toString(),  //description
+                                text =currentWeatherDetails.weather?.first()?.description.toString(),
                                 fontSize = 19.sp,
                                 color = colorResource(R.color.off_white),
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -126,6 +220,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 textAlign = TextAlign.Center
                             )
 
+                            //weather temperature
                             Text(
                                 text = currentWeatherDetails.weatherDetails.temp.toString(),
                                 fontSize = 60.sp, fontWeight = FontWeight.Bold,
@@ -136,6 +231,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                     .padding(top = 16.dp),
                                 textAlign = TextAlign.Center
                             )
+
+
+                            //date and time
                             Text(
                                 text = currentWeatherDetails.dt.toString(),
                                 fontSize = 16.sp, fontWeight = FontWeight.Bold,
@@ -165,59 +263,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 )
-                                //verticalAlignment = Alignment.CenterVertically: Ensures that
-                                // the child elements in the Row are centered vertically.
-
-                                //horizontalArrangement = Arrangement.SpaceBetween: Ensures
-                                // the child elements in the Row are spaced out evenly,
-                                // with the first child on the left, the last on the right,
-                                // and the rest evenly distributed between them.
-                                /*
-        verticalAlignment = Alignment.CenterVertically:
-
-        This property controls how the child elements within the Row are vertically aligned.
-
-        Alignment.CenterVertically: Aligns the items in the Row vertically at the center of the Row's height. So, if you have multiple items inside the Row, they will all be vertically centered along the Row.
-
-        horizontalArrangement = Arrangement.SpaceBetween:
-
-        This property controls the horizontal arrangement of the items inside the Row.
-
-        Arrangement.SpaceBetween: Distributes the children elements such that:
-
-        The first item is placed at the start (left).
-
-        The last item is placed at the end (right).
-
-        The remaining items are evenly spaced out between the first and last items, ensuring that there’s equal space between all items in the Row.
-         */
-
                                 {
-
-                                    WeatherDetailItem(
-                                        icon = R.drawable.rain2,
-                                        value = "22%",
-                                        label = "Rain"
-                                    )
-                                    WeatherDetailItem(
-                                        icon = R.drawable.wind,
-                                        value = "22%",
-                                        label = "Wind Speed"
-                                    )
-                                    WeatherDetailItem(
-                                        icon = R.drawable.humidity,
-                                        value = "22%",
-                                        label = "Humidity"
-                                    )
-                                    WeatherDetailItem(
-                                        icon = R.drawable.pressure,
-                                        value = "981 hpa",
-                                        label = "Pressure"
-                                    )
-                                    WeatherDetailItem(
-                                        icon = R.drawable.clouds,
-                                        value = "100%",
-                                        label = "Clouds"
+                                    
+                                    WeatherDetailItem( currentWeatherDetails
                                     )
 
 
@@ -243,9 +291,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             )
                             {
 
-                                items(items) { item ->
-                                    FutureModelViewHolder(item)
-                                }
+//                                items(items) { item ->
+//                                    FutureModelViewHolder(item)
+//                                }
                             }
                         }
 
@@ -280,9 +328,52 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun FutureModelViewHolder(model: HourlyModel) {
+fun WeatherDetailItem(weatherDetails: CurrentWeather) {
 
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        GlideImage(
+            model = ImageIcon.getWeatherImage(weatherDetails.weather.first().icon),
+            contentDescription = null,
+            modifier = Modifier.size(34.dp)
+        )
+
+        Text(
+            text = "${weatherDetails.wind.speed} m/s", fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.off_white),
+            textAlign = TextAlign.Center
+        )
+    }
+    Image(painter = painterResource(R.drawable.clouds),
+        contentDescription = stringResource(R.string.clouds),
+        modifier = Modifier.padding(start = 5.dp, end = 5.dp)
+    )
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.clouds), fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.off_white),
+            textAlign = TextAlign.Center,
+            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+
+            )
+
+        Text(text = "${weatherDetails.clouds.all}%",
+            color= colorResource(R.color.off_white),
+            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+        )
+    }
+}
+
+@Composable
+fun HourlyWeather(hourlyDetails: List<ListItem>) {
+    //Box (modifier = ){  }
     Column(
         modifier = Modifier
             .width(90.dp)
@@ -296,76 +387,38 @@ fun FutureModelViewHolder(model: HourlyModel) {
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
+        LazyRow (horizontalArrangement = Arrangement.spacedBy(15.dp)){
+            items(hourlyDetails.size){
 
-        Text(
-            text = model.hour, color = colorResource(R.color.off_white),
-            fontSize = 16.sp, modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            textAlign = TextAlign.Center, fontFamily = FontFamily(Font(R.font.alfa_slab))
-        )
-
-        Image(
-            painter = painterResource(
-                id = when (model.picPath) {
-                    "cloudy" -> R.drawable.clouds
-                    "sunny" -> R.drawable.sunny
-                    "windy" -> R.drawable.wind2
-                    "rainy" -> R.drawable.rain
-                    "stormy" -> R.drawable.storm
-
-                    else -> R.drawable.clouds
-                }
-            ), contentDescription = null,
-            modifier = Modifier
-                .size(45.dp)
-                .padding(8.dp),
-            contentScale = ContentScale.Crop
-        )
-
-        Text(
-            text = "${model.temp}", color = colorResource(R.color.off_white),
-            fontSize = 16.sp, modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            textAlign = TextAlign.Center, fontFamily = FontFamily(Font(R.font.alfa_slab))
-        )
+            }
+        }
 
     }
 }
 
-//check
-val items = listOf(
-    HourlyModel("9 am", 11, "cloudy"),  // R.drawable.cloudy_sunny
-    HourlyModel("10 am", 12, "sunny"),  // R.drawable.happysun
-    HourlyModel("11 am", 14, "windy"),  // R.drawable.wind
-    HourlyModel("12 am", 15, "rainy"),  // R.drawable.rainy
-    HourlyModel("1 am", 20, "stormy")   // R.drawable.storm
-)
 
 @Composable
-fun WeatherDetailItem(icon: Int, value: String, label: String) {
+private fun HourlyItem(details: ListItem){
+    val SplittedDate= details.dtTxt.split(" ")
+    val time= SplittedDate[1]
+   // val formattedTime= ti
 
-    Column(
-        modifier = Modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Card (shape = RoundedCornerShape(16.dp), colors= CardDefaults.elevatedCardColors(
+        containerColor = colorResource(R.color.background)),
+        modifier = Modifier.width(180.dp).height(150.dp)
+
     ) {
-        Image(
-            painter = painterResource(id = icon), contentDescription = null,
-            modifier = Modifier.size(34.dp)
-        )
+        Row {
 
-        Text(
-            text = value, fontWeight = FontWeight.Bold,
-            color = colorResource(id = R.color.off_white),
-            textAlign = TextAlign.Center
-        )
-
-        Text(
-            text = label, fontWeight = FontWeight.Bold,
-            color = colorResource(id = R.color.off_white),
-            textAlign = TextAlign.Center
-        )
+        }
     }
+}
+
+fun getHourlyWeather(lat: Double, lon: Double){
+
+}
+@Composable
+fun ShowErrorMessage(errorMsg: Throwable) {
+    Text(text = errorMsg.toString(), fontSize = 24.sp)
 }
 

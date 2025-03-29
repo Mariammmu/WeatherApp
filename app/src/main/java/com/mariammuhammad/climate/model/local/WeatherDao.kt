@@ -9,11 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface WeatherDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAllCurrentWeather(weatherResponse: NextDaysWeather)
+    suspend fun insertAllCurrentWeather(weatherResponse: NextDaysWeather) : Long
 
-    @Query("SELECT * FROM current_weather_table")
     fun getStoredWeather(): Flow<NextDaysWeather>
 
-    @Query("DELETE FROM current_weather_table")
     suspend fun deleteAllWeather()
 }

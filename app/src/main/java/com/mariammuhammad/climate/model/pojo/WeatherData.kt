@@ -1,9 +1,15 @@
 package com.mariammuhammad.climate.model.pojo
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 //https://openweathermap.org/forecast5
 //Endpoint
 //http://api.openweathermap.org/data/2.5/forecast?id=524901&lang=zh_cn&appid={API key}
+////http://api.openweathermap.org/data/2.5/forecast?id=524901&lang=zh_cn&appid=d8624de82ec00c03cb20e4952badd072
+
+//https://openweathermap.org/weather-conditions
+
 data class Root(
     val cod: String,
     val message: Long,
@@ -78,8 +84,10 @@ data class Snow(
     val n3h: Double,
 )
 
+@Entity(tableName = "favorites")
+
 data class City(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val name: String,
     val coord: Coord,
     val country: String,

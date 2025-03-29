@@ -1,14 +1,13 @@
 package com.mariammuhammad.climate.navigation
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.serialization.Serializable
+
 
 @Serializable
 sealed class NavigationRoute() {
     @Serializable
-    object SplashScreen : NavigationRoute()
-
-    @Serializable
-    data object HomeScreen : NavigationRoute()
+    object HomeScreen : NavigationRoute()
 
     @Serializable
     object WeatherAlertScreen : NavigationRoute()
@@ -19,3 +18,7 @@ sealed class NavigationRoute() {
     @Serializable
     object SettingScreen : NavigationRoute()
 }
+
+
+
+
