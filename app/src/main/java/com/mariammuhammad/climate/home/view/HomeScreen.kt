@@ -53,26 +53,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import android.Manifest
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.ListItem
+import com.mariammuhammad.climate.navigation.BottomNavigationBar
+import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.ImageIcon
 import com.mariammuhammad.climate.utiles.LocationPermissionManager
 import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
+import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dateTimeFormater
 import kotlinx.coroutines.coroutineScope
-
-//private fun showRationaleDialog(context: Context, permissionManager: LocationPermissionManager) {
-//    AlertDialog.Builder(context)
-//        .setMessage("We need location permission to provide weather updates based on your location.")
-//        .setPositiveButton("Grant Permission") { _, _ ->
-//            permissionManager.requestLocationPermission()
-//        }
-//        .setNegativeButton("Cancel", null)
-//        .show()
-//}
+import java.util.Calendar
+import java.util.Date
 
 //@Preview(showSystemUi = true)
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -107,28 +105,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
             Toast.makeText(context, "Please enable location permission.", Toast.LENGTH_SHORT).show()
         }
     }
-
-//    var locationPermissionManager= LocationPermissionManager(context,
-//        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),{
-//            if(it){  //1 accept the permission //is granted
-//                Toast.makeText(context, "Location permission granted", Toast.LENGTH_SHORT).show()
-//
-//                locationUpdate.getCurrentLocation {
-//                    homeViewModel.getCurrentWeather(it.latitude,it.longitude, units = "", lang="en")
-//                }
-//            }
-//            else{
-//                Toast.makeText(context, "Please enable the location.", Toast.LENGTH_SHORT).show()
-//            }
-//        }))
-
     // Initialize LocationPermissionManager to request permission
     val locationPermissionManager = LocationPermissionManager(
         context)
 
 
 
-    // Check if location permission is granted and location services are enabled
     // Check if location permission is granted and location services are enabled
     LaunchedEffect(Unit) {  //non composable code inside a composable funstion
         if (locationPermissionManager.isLocationPermissionGranted()) {
@@ -146,10 +128,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
         }
     }
 
-//    val countryName = getCountryName(currentWeatherResponse?.sys?.country)
-//
-//    val sunrise = convertUnixTimeToTime(currentWeatherResponse?.sys?.sunrise?.toLong() ?: 0)
-//    val sunset = convertUnixTimeToTime(currentWeatherResponse?.sys?.sunset?.toLong() ?: 0)
+    //to give it lambda expression
     when(currentWeather){
         is Response.Failure -> {
             isLoading = false
@@ -166,11 +145,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
            val currentWeatherDetails= (currentWeather as Response.Success<CurrentWeather>).data
             Box(
                 modifier = Modifier.fillMaxSize()
-//            .background(brush = Brush.linearGradient(
-//                colors = listOf(colorResource(R.color.background),
-//                    colorResource(R.color.violet)
             )
-
             {
                 Image(
                     painter = painterResource(id = R.drawable.weather), // use a pic from drawable resource
@@ -187,72 +162,93 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
                         item {
                             Text(
-                                text =currentWeatherDetails.weather.first().description,  //description
-                                fontSize = 24.sp,
+                                text = currentWeatherDetails.weather.first().description,  //description like cloudy
+                                fontSize = 30.sp,
                                 color = colorResource(R.color.off_white),
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(top = 48.dp),
+                                    .padding(top = 24.dp),
                                 textAlign = TextAlign.Center
                             )
 
                             //Weather icon
                             GlideImage(
-                                model =ImageIcon.
-                                getWeatherImage("${currentWeatherDetails.weather?.first()?.icon}@2x.png"),
+                                model = ImageIcon.getWeatherImage("${currentWeatherDetails.weather?.first()?.icon}"),
                                 //icon
-                                contentDescription = null,
+                                contentDescription = "Weather Icon",
                                 modifier = Modifier
-                                    .size(150.dp)
-                                    .padding(top = 8.dp)
+                                    .size(180.dp)
+                                    .padding(top = 4.dp)
                             )
+                            //val date = Date(currentWeatherDetails.dt)
 
-                            //Weather description
-                            Text(
-                                text =currentWeatherDetails.weather?.first()?.description.toString(),
-                                fontSize = 19.sp,
-                                color = colorResource(R.color.off_white),
-                                fontFamily = FontFamily(Font(R.font.alfa_slab)),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(top = 8.dp),
-                                textAlign = TextAlign.Center
-                            )
-
-                            //weather temperature
-                            Text(
-                                text = currentWeatherDetails.weatherDetails.temp.toString(),
-                                fontSize = 60.sp, fontWeight = FontWeight.Bold,
-                                color = colorResource(R.color.off_white),
-                                fontFamily = FontFamily(Font(R.font.alfa_slab)),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(top = 16.dp),
-                                textAlign = TextAlign.Center
-                            )
-
-
+                            //val calendar = Calendar.getInstance()
+                            //calendar.time = date
                             //date and time
                             Text(
-                                text = currentWeatherDetails.dt.toString(),
-                                fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                                text = currentWeatherDetails.dt.dateTimeFormater(),   //calendar.get(Calendar.DAY_OF_WEEK).toString(),//currentWeatherDetails.dt.toString(),
+                                fontSize = 14.sp, fontWeight = FontWeight.Bold,
                                 color = colorResource(R.color.off_white),
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(top = 8.dp),
+                                    .padding(top = 4.dp),
                                 textAlign = TextAlign.Center
                             )
+                            Row(
+                                modifier = Modifier.padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            )
+                            {
+                                Row {
+                                    //weather temperature
+                                    Text(
+                                        text = "${currentWeatherDetails.weatherDetails.temp.toInt()} °C",  //+"°C",
+                                        fontSize = 60.sp, fontWeight = FontWeight.Bold,
+                                        color = colorResource(R.color.off_white),
+                                        fontFamily = FontFamily(Font(R.font.alfa_slab)),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(top = 16.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = Constants.UNITS_CELSIUS,
+                                        fontSize = 40.sp,
+                                        modifier = Modifier.padding(top = 16.dp)
+                                    )
+                                }
+                            }
 
-                            Box(
+
+                            Text(
+                                text = "Weather Details",
+                                fontSize = 20.sp, color = colorResource(R.color.off_white),
+                                fontFamily = FontFamily(Font(R.font.alfa_slab)),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                            )
+//                            Box(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(horizontal = 14.dp, vertical = 14.dp)
+//                                    .padding(top = 16.dp)
+//                                    .background(
+//                                        color = Color.Transparent,//colorResource(R.color.background),
+//                                        shape = RoundedCornerShape(25.dp)
+//                                    )
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 14.dp, vertical = 14.dp)
-                                    .background(
-                                        color = colorResource(R.color.background),
-                                        shape = RoundedCornerShape(25.dp)
-                                    )
+                                    .shadow(elevation = 6.dp),
+                                shape = RoundedCornerShape(25.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.Transparent
+                                )
                             ) {
 
                                 Row(
@@ -264,10 +260,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 )
                                 {
-                                    
-                                    WeatherDetailItem( currentWeatherDetails
-                                    )
-
+                                    WeatherDetailItem( currentWeatherDetails)
 
                                 }
 
@@ -286,8 +279,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(horizontal = 20.dp),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
-//means that each item in the row will be spaced by 4 dp from the next one.
-//So, in short, the items in the LazyRow will have a gap of 4 dp between them horizontally.
                             )
                             {
 

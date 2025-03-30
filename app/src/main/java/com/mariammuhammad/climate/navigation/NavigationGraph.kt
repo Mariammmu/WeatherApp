@@ -1,5 +1,7 @@
 package com.mariammuhammad.climate.navigation
 
+import android.annotation.SuppressLint
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -12,6 +14,7 @@ import com.mariammuhammad.climate.model.WeatherRepositoryImpl
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NavigationGraph(navController: NavHostController) {
     NavHost(
@@ -27,19 +30,22 @@ fun NavigationGraph(navController: NavHostController) {
                     )
                 )
             )
-            HomeScreen(viewModel)
-        }
-        composable<NavigationRoute.WeatherAlertScreen>() {
 
-        }
-        composable<NavigationRoute.FavoriteScreen>() {
-            //FavoriteScreen()
-        }
-        composable<NavigationRoute.SettingScreen>() {
+            Scaffold(bottomBar = { BottomNavigationBar(navController) }) {
+                HomeScreen(viewModel)
 
+            }
+            composable<NavigationRoute.WeatherAlertScreen>() {
+
+            }
+            composable<NavigationRoute.FavoriteScreen>() {
+                //FavoriteScreen()
+            }
+            composable<NavigationRoute.SettingScreen>() {
+
+            }
         }
     }
 }
-
 
 

@@ -23,7 +23,7 @@ import java.util.Locale
 
             calendar.timeInMillis = this * 1000
 
-            DateFormat.format("E, dd MMM yyyy h:mm aa", calendar).toString()
+            DateFormat.format("E, dd MMM yyyy | h:mm aa", calendar).toString()
 
         } else ""
     }

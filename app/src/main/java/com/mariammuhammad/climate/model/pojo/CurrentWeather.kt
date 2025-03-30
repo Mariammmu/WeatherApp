@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
         @SerializedName("main") var weatherDetails: Main,
         var wind: Wind,
         var clouds: Clouds,
-        var dt: Int = 0,
+        var dt: Long ,
         var sys: Sys,
         @SerializedName("name")
         var cityName: String?,
