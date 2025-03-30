@@ -11,5 +11,8 @@ import com.google.gson.annotations.SerializedName
         var sys: Sys,
         @SerializedName("name")
         var cityName: String?,
-        var timezone: Int = 0
+        var timezone: Int = 0,
+        val country: String,
+
+        //var city: City
     )

@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import android.Manifest
+import androidx.annotation.Size
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.shadow
@@ -154,7 +155,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                     contentScale = ContentScale.FillBounds
                 )
 
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()
+                    .padding(horizontal = 14.dp)
+                ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -214,14 +217,25 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                             .padding(top = 16.dp),
                                         textAlign = TextAlign.Center
                                     )
-                                    Text(
-                                        text = Constants.UNITS_CELSIUS,
-                                        fontSize = 40.sp,
-                                        modifier = Modifier.padding(top = 16.dp)
-                                    )
+//                                    Text(
+//                                        text = Constants.UNITS_CELSIUS,
+//                                        fontSize = 40.sp,
+//                                        modifier = Modifier.padding(top = 16.dp)
+//                                    )
                                 }
                             }
 
+                            //Question
+                            Text(
+                                text = "${currentWeatherDetails.cityName}, ${currentWeatherDetails.country}",
+                                fontSize = 14.sp,
+                                color = colorResource(R.color.off_white),
+                                fontFamily = FontFamily(Font(R.font.alfa_slab)),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 4.dp),
+                                textAlign = TextAlign.Center
+                            )
 
                             Text(
                                 text = "Weather Details",
@@ -229,7 +243,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
                             )
 //                            Box(
 //                                modifier = Modifier
@@ -240,31 +254,54 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 //                                        color = Color.Transparent,//colorResource(R.color.background),
 //                                        shape = RoundedCornerShape(25.dp)
 //                                    )
+
+
+//                            Card(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(horizontal = 14.dp, vertical = 18.dp)
+//                                    .shadow(elevation = 6.dp),
+//                                shape = RoundedCornerShape(25.dp),
+//                                colors = CardDefaults.cardColors(
+//                                    containerColor = Color.Transparent
+//                                )
+//                            ) {
+//                                Row(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .padding(8.dp),
+//                                    horizontalArrangement = Arrangement.spacedBy(8.dp) // Adds space between each item
+//                                ) {
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 14.dp)
+                                    .padding(horizontal = 14.dp, vertical = 18.dp)
                                     .shadow(elevation = 6.dp),
                                 shape = RoundedCornerShape(25.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = Color.Transparent
                                 )
                             ) {
-
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(100.dp)
-                                        .padding(horizontal = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                )
-                                {
-                                    WeatherDetailItem( currentWeatherDetails)
+                                        .padding(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        WeatherDetailItem(currentWeatherDetails)
 
+                                    }
                                 }
-
                             }
+
+
                             Text(
                                 text = "Today",
                                 fontSize = 20.sp, color = colorResource(R.color.off_white),
@@ -315,52 +352,188 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
             }
         }
     }
-
-
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+
+
 @Composable
 fun WeatherDetailItem(weatherDetails: CurrentWeather) {
-
+    // Wrap all details inside a Column
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        GlideImage(
-            model = ImageIcon.getWeatherImage(weatherDetails.weather.first().icon),
-            contentDescription = null,
-            modifier = Modifier.size(34.dp)
+        // Pressure
+        WeatherDetailRow(
+            label = stringResource(R.string.pressure),
+            imageResource = R.drawable.pressure,
+            value = "${weatherDetails.weatherDetails.pressure} hpa"
         )
 
+        // Wind Speed
+        WeatherDetailRow(
+            label = stringResource(R.string.wind_speed),
+            imageResource = R.drawable.wind2,
+            value = "${weatherDetails.wind.speed} m/s"
+        )
+
+        // Clouds
+        WeatherDetailRow(
+            label = stringResource(R.string.clouds),
+            imageResource = R.drawable.clouds,
+            value = "${weatherDetails.clouds.all}%"
+        )
+
+        // Humidity
+        WeatherDetailRow(
+            label = stringResource(R.string.humidity),
+            imageResource = R.drawable.humd,
+            value = "${weatherDetails.weatherDetails.humidity}%"
+        )
+
+        WeatherDetailRow(
+            label = stringResource(R.string.ultraviolet),
+            imageResource = R.drawable.ultraviolet,
+            value = "${weatherDetails.weatherDetails.tempKf}%"
+        )
+    }
+}
+
+//displaying each weather detail (Label, Image, Value)
+@Composable
+fun WeatherDetailRow(label: String, imageResource: Int, value: String) {
+    Column(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Label
         Text(
-            text = "${weatherDetails.wind.speed} m/s", fontWeight = FontWeight.Bold,
+            text = label,
+            fontWeight = FontWeight.SemiBold,
+            color = colorResource(id = R.color.off_white),
+            textAlign = TextAlign.Center,
+            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+        )
+
+        // Image
+        Image(
+            painter = painterResource(imageResource),
+            contentDescription = label,
+            modifier = Modifier
+                .size(40.dp)
+                .padding(start = 5.dp, end = 5.dp)
+        )
+
+        // Value
+        Text(
+            text = value,
+            fontWeight = FontWeight.Bold,
             color = colorResource(id = R.color.off_white),
             textAlign = TextAlign.Center
         )
     }
-    Image(painter = painterResource(R.drawable.clouds),
-        contentDescription = stringResource(R.string.clouds),
-        modifier = Modifier.padding(start = 5.dp, end = 5.dp)
-    )
-    Column(
-        modifier = Modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.clouds), fontWeight = FontWeight.Bold,
-            color = colorResource(id = R.color.off_white),
-            textAlign = TextAlign.Center,
-            fontFamily = FontFamily(Font(R.font.alfa_slab)),
-
-            )
-
-        Text(text = "${weatherDetails.clouds.all}%",
-            color= colorResource(R.color.off_white),
-            fontFamily = FontFamily(Font(R.font.alfa_slab)),
-        )
-    }
 }
+
+
+//@OptIn(ExperimentalGlideComposeApi::class)
+//@Composable
+//fun WeatherDetailItem(weatherDetails: CurrentWeather) {
+//    Column(
+//        modifier = Modifier.padding(8.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Text(
+//            text = stringResource(R.string.pressure), fontWeight = FontWeight.SemiBold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center,
+//            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+//        )
+//        Image(painter = painterResource(R.drawable.pressure),
+//            contentDescription = stringResource(R.string.clouds),
+//            modifier = Modifier.size(40.dp)
+//                .padding(start = 5.dp, end = 5.dp)
+//        )
+//
+//        Text(
+//            text = "${weatherDetails.weatherDetails.pressure} hpa", fontWeight = FontWeight.Bold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center
+//        )
+//    }
+//
+//    Column(
+//        modifier = Modifier.padding(8.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Text(
+//            text = stringResource(R.string.humidity), fontWeight = FontWeight.SemiBold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center,
+//            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+//        )
+//        Image(painter = painterResource(R.drawable.humidity),
+//            contentDescription = stringResource(R.string.clouds),
+//            modifier = Modifier.size(40.dp)
+//                .padding(start = 5.dp, end = 5.dp)
+//        )
+//
+//        Text(
+//            text = "${weatherDetails.weatherDetails.humidity}%", fontWeight = FontWeight.Bold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center
+//        )
+//    }
+//
+//    Column(
+//        modifier = Modifier.padding(8.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Text(
+//            text = stringResource(R.string.wind_speed), fontWeight = FontWeight.SemiBold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center,
+//            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+//        )
+//        Image(painter = painterResource(R.drawable.wind2),
+//            contentDescription = stringResource(R.string.clouds),
+//            modifier = Modifier.size(40.dp)
+//                .padding(start = 5.dp, end = 5.dp)
+//        )
+//
+//        Text(
+//            text = "${weatherDetails.wind.speed} m/s", fontWeight = FontWeight.Bold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center
+//        )
+//    }
+//
+//    Column(
+//        modifier = Modifier.padding(8.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Text(
+//            text = stringResource(R.string.clouds), fontWeight = FontWeight.SemiBold,
+//            color = colorResource(id = R.color.off_white),
+//            textAlign = TextAlign.Center,
+//            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+//        )
+//
+//        Image(painter = painterResource(R.drawable.clouds),
+//            contentDescription = stringResource(R.string.clouds),
+//            modifier = Modifier.size(40.dp)
+//            .padding(start = 5.dp, end = 5.dp)
+//        )
+//
+//        Text(text = "${weatherDetails.clouds.all}%",
+//            color= colorResource(R.color.off_white),
+//            fontFamily = FontFamily(Font(R.font.alfa_slab)),
+//        )
+//    }
+//}
 
 @Composable
 fun HourlyWeather(hourlyDetails: List<ListItem>) {
