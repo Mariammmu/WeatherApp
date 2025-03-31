@@ -5,6 +5,8 @@ plugins {
     id("com.google.devtools.ksp")
     kotlin("plugin.serialization") version "2.1.10"
 
+    id("kotlin-parcelize")
+
 
 }
 
@@ -62,6 +64,10 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation ("com.google.code.gson:gson:2.12.1")
     implementation(libs.play.services.location)
+
+
+    implementation ("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
 
     //splashScreen
     implementation ("androidx.core:core-splashscreen:1.0.0")

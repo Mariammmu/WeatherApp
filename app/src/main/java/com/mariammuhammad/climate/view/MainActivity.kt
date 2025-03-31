@@ -29,13 +29,12 @@ class MainActivity : ComponentActivity() {  //AccessLocation
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // enableEdgeToEdge()
-
+        actionBar?.hide()
 
         val showSplashScreen = MutableStateFlow(true)
         installSplashScreen().setKeepOnScreenCondition {
             showSplashScreen.value
         }
-//        supportActionBar?.hide()
 
         // Initialize viewModel
 //        val viewModel: HomeViewModel = viewModel(

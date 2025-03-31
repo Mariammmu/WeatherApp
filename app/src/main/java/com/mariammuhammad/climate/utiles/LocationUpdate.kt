@@ -20,7 +20,6 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.Task
-import com.mariammuhammad.climate.model.pojo.Coord
 
 //The FusedLocationProvider usa higher-level API that simplifies the process of obtaining location data
 // in Android, and it automatically selects the best available location source (GPS, Wi-Fi, etc.) based on

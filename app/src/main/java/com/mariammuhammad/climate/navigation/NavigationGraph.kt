@@ -31,7 +31,7 @@ fun NavigationGraph(navController: NavHostController) {
                 )
             )
 
-            Scaffold(bottomBar = { BottomNavigationBar(navController) }) {
+           // Scaffold(bottomBar = { BottomNavigationBar(navController) }) {
                 HomeScreen(viewModel)
 
             }
@@ -46,6 +46,6 @@ fun NavigationGraph(navController: NavHostController) {
             }
         }
     }
-}
+
 
 

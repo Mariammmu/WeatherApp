@@ -16,9 +16,7 @@ interface WeatherService {
         @Query("units") temperature: String,
         @Query("lang") language: String,
         @Query("appid") apiKey: String= Constants.ApiKey
-
-
-        ):CurrentWeather
+        ): CurrentWeather
 
 //    @GET("forecast")
 //    suspend fun getWeatherByCity(

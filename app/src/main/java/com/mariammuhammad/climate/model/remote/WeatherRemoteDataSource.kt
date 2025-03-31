@@ -1,5 +1,7 @@
 package com.mariammuhammad.climate.model.remote
 
+import android.util.Log
+import com.google.gson.Gson
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import com.mariammuhammad.climate.utiles.Response
@@ -16,17 +18,7 @@ class WeatherRemoteDataSource(private val service: WeatherService) {
         lang: String
     ): Flow<CurrentWeather> = flow{
         emit(service.getWeatherData(lat, lon, tempUnit, lang))
-//        return try {
-//            val currentWeatherResult =
-//                service.getWeatherData(lat, lon, apiKey, tempUnit, lang)
-//            if (currentWeatherResult != null) {
-//                flowOf(Response.Success(currentWeatherResult))
-//            } else {
-//                flowOf(Response.Failure(Throwable("Error retrieving data")))
-//            }
-//        } catch (th: Throwable) {
-//            flowOf(Response.Failure(th))
-//        }
+
     }
 
     suspend fun get5DaysEvery3Hours(
@@ -36,15 +28,6 @@ class WeatherRemoteDataSource(private val service: WeatherService) {
         lang: String
     ): Flow<NextDaysWeather> = flow {
         emit(service.get5DaysEvery3Hours(lat, lon, tempUnit, lang))
-//        return try {
-//            val NextDaysWeather =
-//                service.get5DaysEvery3Hours(lat, lon, apiKey, tempUnit, lang)
-//            if (NextDaysWeather != null) {
-//                flowOf( Response.Success(NextDaysWeather))
-//            } else
-//               flowOf(Response.Failure(Throwable("Error retrieving data")))
-//        } catch (th: Throwable) {
-//            flowOf( Response.Failure(th)) //without out        }
-//        }
+        Log.i("TAG", "get5DaysEvery3Hours:${Gson().toJson(service.get5DaysEvery3Hours(lat, lon, tempUnit, lang))} ")
     }
 }

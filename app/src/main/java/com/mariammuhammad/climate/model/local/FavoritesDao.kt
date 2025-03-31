@@ -4,16 +4,15 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.mariammuhammad.climate.model.pojo.City
 import kotlinx.coroutines.flow.Flow
 
 interface FavoritesDao {
-    @Query("SELECT * FROM favorites")
-    fun getFavCities(): Flow<List<City>>
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertFavCity(city: City) : Long
-
-    @Delete
-    suspend fun deleteFavCity(city: City) : Int
+//    @Query("SELECT * FROM favorites")
+//    fun getFavCities(): Flow<List<City>>
+//
+//    @Insert(onConflict = OnConflictStrategy.IGNORE)
+//    suspend fun insertFavCity(city: City) : Long
+//
+//    @Delete
+//    suspend fun deleteFavCity(city: City) : Int
 }

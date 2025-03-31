@@ -4,6 +4,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 data class NextDaysWeather (
-    val list: List<ListItem>,
-    val city: City
+    val list: List<CurrentWeather>
+   // val city: City
     )

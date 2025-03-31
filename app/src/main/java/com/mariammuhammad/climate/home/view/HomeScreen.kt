@@ -53,16 +53,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import android.Manifest
+import android.util.Log
 import androidx.annotation.Size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import com.google.gson.Gson
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.ListItem
+import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import com.mariammuhammad.climate.navigation.BottomNavigationBar
 import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.ImageIcon
@@ -71,8 +78,10 @@ import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dateTimeFormater
+import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dayFormater
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.timeFormater
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.Json
 import java.util.Calendar
 import java.util.Date
 
@@ -80,7 +89,6 @@ import java.util.Date
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel) { //
-
 
     var context = LocalContext.current
     val currentWeather by homeViewModel.currentWeather.collectAsState()
@@ -91,6 +99,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
     var isDataShown by rememberSaveable { mutableStateOf(false) }
     var unit by rememberSaveable { mutableStateOf("metric") }
     var lang by rememberSaveable { mutableStateOf("en") }
+    val scrollState = rememberScrollState()
+
 
     val launcherActivity =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -156,21 +166,56 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
         }
 
         Response.Loading -> {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                CircularProgressIndicator(modifier = Modifier.size(100.dp))
+
+
+            }
         }
 
 
         is Response.Success -> {
-
             val currentWeatherDetails = (currentWeather as Response.Success<CurrentWeather>).data
+            Log.i("TAG", "CurrentWeather:${currentWeatherDetails.name}")
+
+            //  val hourlyForecast = when (nextDaysWeather) {
+//                is Response.Success -> {
+
+            Log.i("HOURLY_DEBUG", "NextDaysWeather state: $nextDaysWeather")
 
             val hourlyForecast = when (nextDaysWeather) {
-                is Response.Success ->
-                    (nextDaysWeather as Response.Success<List<ListItem>>).data.take(9)
+                is Response.Success -> {
+                    val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
+                    Log.i("HOURLY_DEBUG", "Forecast items: ${forecast.list?.size}")
+                    forecast.list?.take(4) ?: emptyList()
+                }
 
                 else -> emptyList()
-                //what does that mean
             }
 
+            val dailyForecast = when (nextDaysWeather) {
+                is Response.Success -> {
+                    val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
+                    // Group by day and take first item of each day
+                    forecast.list?.groupBy { it.dt.toLong().dateTimeFormater() }
+                        ?.values?.map { it.first() }?.take(5) ?: emptyList()
+                }
+
+                else -> emptyList()
+            }
+
+
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .verticalScroll(scrollState)  // Make the column scrollable
+//                    .padding(16.dp)
+//            ) {
             Box(
                 modifier = Modifier.fillMaxSize()
             )
@@ -183,13 +228,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 )
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -206,10 +252,11 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 textAlign = TextAlign.Center
                             )
 
+
                             //Weather icon
                             GlideImage(
                                 model = ImageIcon.getWeatherImage(
-                                    "${currentWeatherDetails.weather?.first()?.icon}"
+                                    currentWeatherDetails.weather.first().icon
                                 ),
                                 //icon
                                 contentDescription = "Weather Icon",
@@ -224,7 +271,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             //calendar.time = date
                             //date and time
                             Text(
-                                text = currentWeatherDetails.dt.dateTimeFormater(),   //calendar.get(Calendar.DAY_OF_WEEK).toString(),//currentWeatherDetails.dt.toString(),
+                                text = currentWeatherDetails.dt.toLong()
+                                    .dateTimeFormater(),   //calendar.get(Calendar.DAY_OF_WEEK).toString(),//currentWeatherDetails.dt.toString(),
                                 fontSize = 14.sp, fontWeight = FontWeight.Bold,
                                 color = colorResource(R.color.off_white),
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -239,7 +287,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             ) {
                                 //weather temperature
                                 Text(
-                                    text = "${currentWeatherDetails.weatherDetails.temp.toInt()}",  //+"°C",
+                                    text = "${currentWeatherDetails.main.temp.toInt()}",  //+"°C",
                                     fontSize = 60.sp, fontWeight = FontWeight.Bold,
                                     color = colorResource(R.color.off_white),
                                     fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -266,12 +314,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "H${currentWeatherDetails.weatherDetails.tempMax.toInt()} ",
+                                    text = "H${currentWeatherDetails.main.temp_max.toInt()} ",
                                     fontSize = 18.sp,
                                     color = colorResource(R.color.off_white)
                                 )
                                 Text(
-                                    text = "| L${currentWeatherDetails.weatherDetails.tempMin.toInt()}",
+                                    text = "| L${currentWeatherDetails.main.temp_min.toInt()}",
                                     fontSize = 18.sp,
                                     color = colorResource(R.color.off_white)
                                 )
@@ -279,7 +327,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
                             // Location
                             Text(
-                                text = "${currentWeatherDetails.cityName}, ${currentWeatherDetails.country}",
+                                text = "${currentWeatherDetails.name}, ${currentWeatherDetails.sys.country}",
                                 fontSize = 16.sp,
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
                                 color = Color.White,
@@ -293,22 +341,17 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
                     }
 
-
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(16.dp)
                         ) {
-
                             Text(
                                 text = "Weather Details",
                                 fontSize = 20.sp,
-                                color = colorResource(R.color.off_white),
-                                fontFamily = FontFamily(Font(R.font.alfa_slab)),
-                                modifier = Modifier
-                                    // .fillMaxSize()
-                                    // .padding(horizontal = 8.dp, vertical = 8.dp),
-                                    .padding(bottom = 8.dp)
+                                color = Color.White,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
 
                             Card(
@@ -325,13 +368,11 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 8.dp),
-//                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                                        verticalAlignment = Alignment.CenterVertically
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
 
-                                    WeatherDetailItem(currentWeatherDetails)
+                                    WeatherDetails(currentWeatherDetails)
 
 
                                 }
@@ -339,25 +380,77 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
 
                         }
                     }
-
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
-
                             Text(
-                                text = "Today",
+                                text = "Hourly Details",
                                 fontSize = 20.sp,
                                 color = Color.White,
                                 modifier = Modifier.padding(16.dp)
                             )
 
-                            if (hourlyForecast.isNotEmpty()) {
-                                LazyRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentPadding = PaddingValues(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    items(hourlyForecast) { item ->
-                                        HourlyWeatherItem(item)
+                            when {
+                                hourlyForecast.isNotEmpty() -> {
+                                    LazyRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
+                                    ) {
+                                        items(hourlyForecast) { item ->
+                                            HourlyWeatherItem(item)
+                                        }
+                                    }
+                                }
+
+                                nextDaysWeather is Response.Loading -> {
+                                    Text(
+                                        text = "Loading hourly data...",
+                                        color = Color.White,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+
+                                nextDaysWeather is Response.Failure -> {
+                                    Text(
+                                        text = "Failed to load hourly data",
+                                        color = Color.Red,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                            item {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Text(
+                                        text = "Next 5 Days",
+                                        fontSize = 20.sp,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+
+                                    if (dailyForecast.isEmpty()) {
+                                        if (nextDaysWeather is Response.Loading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .align(Alignment.CenterHorizontally)
+                                                    .padding(16.dp),
+                                                color = Color.White
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "No forecast data available",
+                                                color = Color.White,
+                                                modifier = Modifier.padding(16.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Column {
+                                            dailyForecast.forEach { day ->
+                                                DailyForecastItem(day)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -366,19 +459,60 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 }
             }
         }
-    }
-}
+
+
+
+//                    item {
+//                        Column(modifier = Modifier.fillMaxWidth()) {
+//                            Text(
+//                                text = "Hourly Details",
+//                                fontSize = 20.sp,
+//                                color = Color.White,
+//                                modifier = Modifier.padding(16.dp)
+//                            )
+//
+//                            if (hourlyForecast.isEmpty()) {
+//                                Text(
+//                                    text = "Loading hourly data...",
+//                                    color = Color.White,
+//                                    modifier = Modifier.padding(16.dp)
+//                                )
+//                            } else {
+//                                LazyRow(
+//                                    modifier = Modifier.fillMaxWidth(),
+//                                    contentPadding = PaddingValues(horizontal = 16.dp),
+//                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+//                                ) {
+//                                    items(hourlyForecast) { item ->
+//                                        HourlyWeatherItem(item)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+//                               // } else {
+//                                    Text(
+//                                        text = "No hourly data available",
+//                                        color = Color.White,
+//                                        modifier = Modifier.padding(16.dp)
+//                                    )
+//                                }
+                            //}
 
 
 @Composable
-fun WeatherDetailItem(weatherDetails: CurrentWeather) {
+fun WeatherDetails(weatherDetails: CurrentWeather) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // First Row - Pressure, Clouds, Wind Speed
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -388,13 +522,13 @@ fun WeatherDetailItem(weatherDetails: CurrentWeather) {
             WeatherDetailItem(
                 label = stringResource(R.string.pressure),
                 imageResource = R.drawable.pressure2,
-                value = "${weatherDetails.weatherDetails.pressure} hpa"
+                value = "${weatherDetails.main.pressure} hpa"
             )
 
             WeatherDetailItem(
                 label = stringResource(R.string.humidity),
                 imageResource = R.drawable.humd,
-                value = "${weatherDetails.weatherDetails.humidity}%"
+                value = "${weatherDetails.main.humidity}%"
             )
 
             WeatherDetailItem(
@@ -404,10 +538,8 @@ fun WeatherDetailItem(weatherDetails: CurrentWeather) {
             )
 
 
-
         }
 
-        // Second Row - Humidity, Ultraviolet
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -417,7 +549,7 @@ fun WeatherDetailItem(weatherDetails: CurrentWeather) {
             WeatherDetailItem(
                 label = stringResource(R.string.ultraviolet),
                 imageResource = R.drawable.ultraviolet,
-                value = "${weatherDetails.weatherDetails.tempKf}"
+                value = "${weatherDetails.main.feels_like}"
             )
 
             WeatherDetailItem(
@@ -428,55 +560,178 @@ fun WeatherDetailItem(weatherDetails: CurrentWeather) {
         }
     }
 }
+
 @Composable
 fun WeatherDetailItem(label: String, imageResource: Int, value: String) {
+    Column(
+        modifier = Modifier
+            .padding(8.dp)
+            .width(100.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = colorResource(id = R.color.off_white),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Image(
+            painter = painterResource(imageResource),
+            contentDescription = label,
+            modifier = Modifier
+                .size(60.dp)
+                .padding(vertical = 8.dp)
+        )
+
+        Text(
+            text = value,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = colorResource(id = R.color.off_white),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+    // }
+}
+
+
+// Keep your existing HourlyWeatherItem composable as is
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun HourlyWeatherItem(item: CurrentWeather) {
+    Card(
+        modifier = Modifier
+            .padding(8.dp)
+            .width(80.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.dt.toLong().timeFormater(),
+                fontSize = 14.sp,
+                color = Color.White
+            )
+            GlideImage(
+                model = ImageIcon.getWeatherImage(item.weather.first().icon),
+                contentDescription = "Hourly weather",
+                modifier = Modifier.size(40.dp)
+            )
+            Text(
+                text = "${item.main.temp.toInt()}°",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun DailyForecastItem(day: CurrentWeather) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Day of week
+            Text(
+                text = day.dt.toLong().dayFormater(),
+                color = Color.White,
+                fontSize = 16.sp
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Weather icon
+                GlideImage(
+                    model = ImageIcon.getWeatherImage(day.weather.first().icon),
+                    contentDescription = "Weather icon",
+                    modifier = Modifier.size(40.dp)
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Temperatures
+                Text(
+                    text = "${day.main.temp_max.toInt()}° / ${day.main.temp_min.toInt()}°",
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
+
+//@Composable
+//fun TodayHourlyData(hourlyData: List<CurrentWeather>) {
+//    if (!hourlyData.isNullOrEmpty()) {
+//        Text(
+//            text = "Hourly Details",
+//            style = MaterialTheme.typography.titleLarge,
+//            textAlign = TextAlign.Start,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(horizontal = 16.dp)
+//        )
+//        LazyRow(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+//            items(hourlyData.size) {
+//                //                HourlyWeatherItem(hourlyData[it])
+//                hourlyData[it]?.let { it1 -> HourlyWeatherItem(it1) }
+//            }
+//        }
+//    }
+//}
+
+//@OptIn(ExperimentalGlideComposeApi::class)
+//@Composable
+//fun HourlyWeatherItem(item: CurrentWeather) {
 //    Card(
 //        modifier = Modifier
 //            .padding(8.dp)
-//            .fillMaxWidth(0.9f),
-//        shape = RoundedCornerShape(16.dp),
-//        colors = CardDefaults.cardColors(
-//            containerColor = Color.Transparent.copy(alpha = 0.3f)
-//        )
+//            .width(80.dp),
+//        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 //    ) {
-        Column(
-            modifier = Modifier
-                .padding(8.dp)
-                .width(100.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Label
-            Text(
-                text = label,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = colorResource(id = R.color.off_white),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+//        Column(
+//            modifier = Modifier.padding(8.dp),
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+//            Text(
+//                text = item.dt.toLong().timeFormater(),
+//                fontSize = 14.sp,
+//                color = Color.White
+//            )
+//            GlideImage(
+//                model = ImageIcon.getWeatherImage(item.weather.first().icon),
+//                contentDescription = "Hourly weather",
+//                modifier = Modifier.size(40.dp)
+//            )
+//            Text(
+//                text = "${item.main.temp.toInt()}°",
+//                fontSize = 16.sp,
+//                fontWeight = FontWeight.Bold,
+//                color = Color.White
+//            )
+//        }
+//    }
+//}
 
-            // Image
-            Image(
-                painter = painterResource(imageResource),
-                contentDescription = label,
-                modifier = Modifier
-                    .size(60.dp)
-                    .padding(vertical = 8.dp)
-            )
-
-            // Value
-            Text(
-                text = value,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                color = colorResource(id = R.color.off_white),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-   // }
-}
-
+/*
 @Composable
 fun HourlyWeatherForecast(hourlyDetails: List<ListItem>) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -503,30 +758,36 @@ fun HourlyWeatherForecast(hourlyDetails: List<ListItem>) {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HourlyWeatherItem(item: ListItem) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(60.dp)
+    Card(
+        modifier = Modifier
+            .padding(8.dp)
+            .width(80.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
-        Text(
-            text = item.dt.timeFormater(),
-            fontSize = 14.sp,
-            color = Color.White
-        )
-        GlideImage(
-            model = ImageIcon.getWeatherImage(item.weather.first().icon),
-            contentDescription = "Weather icon",
-            modifier = Modifier.size(40.dp)
-        )
-        Text(
-            text = "${item.main.temp.toInt()}°",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.dt.timeFormater(),
+                fontSize = 14.sp,
+                color = Color.White
+            )
+            GlideImage(
+                model = ImageIcon.getWeatherImage(item.weather.first().icon),
+                contentDescription = "Hourly weather",
+                modifier = Modifier.size(40.dp)
+            )
+            Text(
+                text = "${item.main.temp.toInt()}°",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }
-
-
+*/
 @Composable
 fun ShowErrorMessage(errorMsg: Throwable) {
     Text(text = errorMsg.toString(), fontSize = 24.sp)

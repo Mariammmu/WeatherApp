@@ -30,7 +30,7 @@ class HomeViewModel( val repo: WeatherRepository) : ViewModel() {
 
             repo.getWeatherForecast(lat, lon, units, lang).collect { response ->
                 try {//(response is Response.Success) {
-                    _currentWeather.value = Response.Success(response) //as Response<CurrentWeather>  //not the better thing to do
+                    _currentWeather.value =  Response.Success(response) //as Response<CurrentWeather>  //not the better thing to do
                 } catch(th: Throwable) {
                     _currentWeather.value =
                         Response.Failure(Throwable("Error retrieving weather data"))
