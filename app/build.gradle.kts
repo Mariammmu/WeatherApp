@@ -94,7 +94,7 @@ dependencies {
     // Lifecycle dependencies
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
 
-
+    implementation ("com.google.maps.android:maps-compose:6.5.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

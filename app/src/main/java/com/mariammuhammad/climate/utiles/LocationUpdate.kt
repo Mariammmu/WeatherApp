@@ -32,7 +32,6 @@ class LocationUpdate(private val context: Context) {
 
 //    private var lastLocation: Location? = null
 
-    //check if location is enabled (GPS or network)
     fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
             context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -40,7 +39,6 @@ class LocationUpdate(private val context: Context) {
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
-    // prompt the user to enable location services if they are disabled
     fun promptEnableLocationSettings() {
         val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
         context.startActivity(intent)

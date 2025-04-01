@@ -1,5 +1,6 @@
 package com.mariammuhammad.climate.model
 
+import com.mariammuhammad.climate.model.pojo.City
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import com.mariammuhammad.climate.utiles.Response
@@ -20,5 +21,11 @@ interface WeatherRepository {
         lan: String
     ): Flow<NextDaysWeather>
 
+    fun getFavCitiesLocal():Flow<List<City>>
+
+    suspend fun insertFavCityLocal(city: City):Long
+
+
+    suspend fun deleteFavCityLocal(city: City):Int
 
 }

@@ -49,7 +49,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import android.Manifest
@@ -69,6 +68,7 @@ import com.google.gson.Gson
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
+import com.mariammuhammad.climate.model.pojo.ListDaysDetails
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import com.mariammuhammad.climate.navigation.BottomNavigationBar
 import com.mariammuhammad.climate.utiles.Constants
@@ -84,11 +84,17 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import java.util.Calendar
 import java.util.Date
-
+//AIzaSyA5rMOFNsoUcLMTq3YiLny0A0mG48lmO3c
+//Use this: AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
+//AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
 //@Preview(showSystemUi = true)
+
+private var tempUnit = ""
+private var windSpeedUnit = ""
+
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) { //
+fun HomeScreen(homeViewModel: HomeViewModel) {
 
     var context = LocalContext.current
     val currentWeather by homeViewModel.currentWeather.collectAsState()
@@ -99,17 +105,22 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
     var isDataShown by rememberSaveable { mutableStateOf(false) }
     var unit by rememberSaveable { mutableStateOf("metric") }
     var lang by rememberSaveable { mutableStateOf("en") }
-    val scrollState = rememberScrollState()
 
+    val locationPermissionManager = LocationPermissionManager(context)
 
     val launcherActivity =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                // Permission granted, check if location services are enabled
                 if (locationUpdate.isLocationEnabled()) {
                     locationUpdate.getLastLocation { location ->
-                        // Fetch weather data after getting the location
+                        // fetch weather data after getting the location
                         location?.let {
+                            homeViewModel.get5DaysWeather(
+                                it.latitude,
+                                location.longitude,
+                                tempUnit = unit,
+                                lang = lang
+                            )
                             homeViewModel.getCurrentWeather(
                                 it.latitude,
                                 location.longitude,
@@ -119,20 +130,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                         }
                     }
                 } else {
-                    // Prompt user to enable location services
                     locationUpdate.promptEnableLocationSettings()
                 }
             } else {
                 // Show message if permission is denied
-                Toast.makeText(context, "Please enable location permission.", Toast.LENGTH_SHORT)
-                    .show()
+                locationPermissionManager.showLocationServiceRationaleDialog(context)
+               // Toast.makeText(context, "Please enable location permission.", Toast.LENGTH_SHORT).show()
             }
         }
-    // Initialize LocationPermissionManager to request permission
-    val locationPermissionManager = LocationPermissionManager(
-        context
-    )
-
 
     // Check if location permission is granted and location services are enabled
     LaunchedEffect(Unit) {  //non composable code inside a composable funstion
@@ -146,6 +151,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             units = unit,
                             lang = lang
                         )
+                        homeViewModel.get5DaysWeather(
+                            it.latitude,
+                            location.longitude,
+                            tempUnit = unit,
+                            lang = lang
+                        )
                     }
                 }
             } else {
@@ -156,7 +167,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
         }
     }
 
-    when (currentWeather) {
+    when (currentWeather) { //child
         is Response.Failure -> {
             isLoading = false
             if (!isDataShown) {
@@ -164,37 +175,25 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 ShowErrorMessage(errorMsg)
             }
         }
-
         Response.Loading -> {
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 CircularProgressIndicator(modifier = Modifier.size(100.dp))
-
-
             }
         }
-
-
         is Response.Success -> {
             val currentWeatherDetails = (currentWeather as Response.Success<CurrentWeather>).data
             Log.i("TAG", "CurrentWeather:${currentWeatherDetails.name}")
-
-            //  val hourlyForecast = when (nextDaysWeather) {
-//                is Response.Success -> {
-
-            Log.i("HOURLY_DEBUG", "NextDaysWeather state: $nextDaysWeather")
 
             val hourlyForecast = when (nextDaysWeather) {
                 is Response.Success -> {
                     val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
                     Log.i("HOURLY_DEBUG", "Forecast items: ${forecast.list?.size}")
-                    forecast.list?.take(4) ?: emptyList()
+                    forecast.list.take(12)
                 }
-
                 else -> emptyList()
             }
 
@@ -202,20 +201,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 is Response.Success -> {
                     val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
                     // Group by day and take first item of each day
-                    forecast.list?.groupBy { it.dt.toLong().dateTimeFormater() }
-                        ?.values?.map { it.first() }?.take(5) ?: emptyList()
+                    forecast.list.groupBy { it.dt.dateTimeFormater() }
+                        .values?.map { it.first() }?.take(5) ?: emptyList()
                 }
 
                 else -> emptyList()
             }
 
 
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .verticalScroll(scrollState)  // Make the column scrollable
-//                    .padding(16.dp)
-//            ) {
             Box(
                 modifier = Modifier.fillMaxSize()
             )
@@ -228,8 +221,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 )
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 20.dp) //3ashan el bottom nav bar
                 ) {
 
                     item {
@@ -252,8 +247,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 textAlign = TextAlign.Center
                             )
 
-
-                            //Weather icon
                             GlideImage(
                                 model = ImageIcon.getWeatherImage(
                                     currentWeatherDetails.weather.first().icon
@@ -287,7 +280,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             ) {
                                 //weather temperature
                                 Text(
-                                    text = "${currentWeatherDetails.main.temp.toInt()}",  //+"°C",
+                                    text = "${currentWeatherDetails.main.temp.toInt()}",
                                     fontSize = 60.sp, fontWeight = FontWeight.Bold,
                                     color = colorResource(R.color.off_white),
                                     fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -314,18 +307,18 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "H${currentWeatherDetails.main.temp_max.toInt()} ",
+                                    text = "H${currentWeatherDetails.main.tempMax.toInt()} ",
                                     fontSize = 18.sp,
                                     color = colorResource(R.color.off_white)
                                 )
                                 Text(
-                                    text = "| L${currentWeatherDetails.main.temp_min.toInt()}",
+                                    text = "| L${currentWeatherDetails.main.tempMin.toInt()}",
                                     fontSize = 18.sp,
                                     color = colorResource(R.color.off_white)
                                 )
                             }
 
-                            // Location
+                            // location
                             Text(
                                 text = "${currentWeatherDetails.name}, ${currentWeatherDetails.sys.country}",
                                 fontSize = 16.sp,
@@ -345,13 +338,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(10.dp)
                         ) {
                             Text(
-                                text = "Weather Details",
+                                text = stringResource(R.string.weather_details),
                                 fontSize = 20.sp,
                                 color = Color.White,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                modifier = Modifier.padding(bottom = 8.dp),
+                                fontFamily = FontFamily(Font(R.font.alfa_slab))
                             )
 
                             Card(
@@ -383,10 +377,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                     item {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = "Hourly Details",
+                                text = stringResource(R.string.hourly_details),
                                 fontSize = 20.sp,
                                 color = Color.White,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp),
+                                fontFamily = FontFamily(Font(R.font.alfa_slab))
+
                             )
 
                             when {
@@ -423,10 +419,11 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                             item {
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     Text(
-                                        text = "Next 5 Days",
+                                        text = stringResource(R.string.next_5_days),
                                         fontSize = 20.sp,
                                         color = Color.White,
-                                        modifier = Modifier.padding(16.dp)
+                                        modifier = Modifier.padding(16.dp),
+                                        fontFamily = FontFamily(Font(R.font.alfa_slab))
                                     )
 
                                     if (dailyForecast.isEmpty()) {
@@ -459,51 +456,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) { //
                 }
             }
         }
-
-
-
-//                    item {
-//                        Column(modifier = Modifier.fillMaxWidth()) {
-//                            Text(
-//                                text = "Hourly Details",
-//                                fontSize = 20.sp,
-//                                color = Color.White,
-//                                modifier = Modifier.padding(16.dp)
-//                            )
-//
-//                            if (hourlyForecast.isEmpty()) {
-//                                Text(
-//                                    text = "Loading hourly data...",
-//                                    color = Color.White,
-//                                    modifier = Modifier.padding(16.dp)
-//                                )
-//                            } else {
-//                                LazyRow(
-//                                    modifier = Modifier.fillMaxWidth(),
-//                                    contentPadding = PaddingValues(horizontal = 16.dp),
-//                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-//                                ) {
-//                                    items(hourlyForecast) { item ->
-//                                        HourlyWeatherItem(item)
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//                               // } else {
-//                                    Text(
-//                                        text = "No hourly data available",
-//                                        color = Color.White,
-//                                        modifier = Modifier.padding(16.dp)
-//                                    )
-//                                }
-                            //}
-
 
 @Composable
 fun WeatherDetails(weatherDetails: CurrentWeather) {
@@ -549,13 +501,13 @@ fun WeatherDetails(weatherDetails: CurrentWeather) {
             WeatherDetailItem(
                 label = stringResource(R.string.ultraviolet),
                 imageResource = R.drawable.ultraviolet,
-                value = "${weatherDetails.main.feels_like}"
+                value = "${weatherDetails.main.feelsLike}"
             )
 
             WeatherDetailItem(
                 label = stringResource(R.string.wind_speed),
                 imageResource = R.drawable.wind2,
-                value = "${weatherDetails.wind.speed} m/s"
+                value = "${weatherDetails.wind.speed} m/s" //
             )
         }
     }
@@ -595,19 +547,16 @@ fun WeatherDetailItem(label: String, imageResource: Int, value: String) {
             modifier = Modifier.padding(top = 8.dp)
         )
     }
-    // }
 }
 
-
-// Keep your existing HourlyWeatherItem composable as is
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun HourlyWeatherItem(item: CurrentWeather) {
+fun HourlyWeatherItem(item: ListDaysDetails) {
     Card(
         modifier = Modifier
             .padding(8.dp)
-            .width(80.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            .width(90.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier.padding(8.dp),
@@ -615,7 +564,7 @@ fun HourlyWeatherItem(item: CurrentWeather) {
         ) {
             Text(
                 text = item.dt.toLong().timeFormater(),
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color.White
             )
             GlideImage(
@@ -633,15 +582,14 @@ fun HourlyWeatherItem(item: CurrentWeather) {
     }
 }
 
-
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun DailyForecastItem(day: CurrentWeather) {
+fun DailyForecastItem(day: ListDaysDetails) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.3f))
     ) {
         Row(
             modifier = Modifier
@@ -650,144 +598,37 @@ fun DailyForecastItem(day: CurrentWeather) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Day of week
-            Text(
-                text = day.dt.toLong().dayFormater(),
-                color = Color.White,
-                fontSize = 16.sp
-            )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Weather icon
-                GlideImage(
-                    model = ImageIcon.getWeatherImage(day.weather.first().icon),
-                    contentDescription = "Weather icon",
-                    modifier = Modifier.size(40.dp)
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Temperatures
+            Column {
                 Text(
-                    text = "${day.main.temp_max.toInt()}° / ${day.main.temp_min.toInt()}°",
+                    text = day.dt.dayFormater(),
                     color = Color.White,
                     fontSize = 16.sp
                 )
             }
-        }
-    }
-}
 
-//@Composable
-//fun TodayHourlyData(hourlyData: List<CurrentWeather>) {
-//    if (!hourlyData.isNullOrEmpty()) {
-//        Text(
-//            text = "Hourly Details",
-//            style = MaterialTheme.typography.titleLarge,
-//            textAlign = TextAlign.Start,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(horizontal = 16.dp)
-//        )
-//        LazyRow(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-//            items(hourlyData.size) {
-//                //                HourlyWeatherItem(hourlyData[it])
-//                hourlyData[it]?.let { it1 -> HourlyWeatherItem(it1) }
-//            }
-//        }
-//    }
-//}
+            GlideImage(
+                model = ImageIcon.getWeatherImage(day.weather.first().icon),
+                contentDescription = "Weather icon",
+                modifier = Modifier.size(40.dp)
+            )
 
-//@OptIn(ExperimentalGlideComposeApi::class)
-//@Composable
-//fun HourlyWeatherItem(item: CurrentWeather) {
-//    Card(
-//        modifier = Modifier
-//            .padding(8.dp)
-//            .width(80.dp),
-//        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-//    ) {
-//        Column(
-//            modifier = Modifier.padding(8.dp),
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            Text(
-//                text = item.dt.toLong().timeFormater(),
-//                fontSize = 14.sp,
-//                color = Color.White
-//            )
-//            GlideImage(
-//                model = ImageIcon.getWeatherImage(item.weather.first().icon),
-//                contentDescription = "Hourly weather",
-//                modifier = Modifier.size(40.dp)
-//            )
-//            Text(
-//                text = "${item.main.temp.toInt()}°",
-//                fontSize = 16.sp,
-//                fontWeight = FontWeight.Bold,
-//                color = Color.White
-//            )
-//        }
-//    }
-//}
-
-/*
-@Composable
-fun HourlyWeatherForecast(hourlyDetails: List<ListItem>) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(
-            text = "Hourly Forecast",
-            fontSize = 20.sp,
-            color = colorResource(R.color.off_white),
-            fontFamily = FontFamily(Font(R.font.alfa_slab)),
-            modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
-        )
-
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(hourlyDetails) { hourlyItem ->
-                HourlyWeatherItem(item = hourlyItem)
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${day.main.tempMax.toInt()}° / ${day.main.tempMin.toInt()}°",
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "Feels like ${day.main.feelsLike.toInt()}°",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 12.sp
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun HourlyWeatherItem(item: ListItem) {
-    Card(
-        modifier = Modifier
-            .padding(8.dp)
-            .width(80.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = item.dt.timeFormater(),
-                fontSize = 14.sp,
-                color = Color.White
-            )
-            GlideImage(
-                model = ImageIcon.getWeatherImage(item.weather.first().icon),
-                contentDescription = "Hourly weather",
-                modifier = Modifier.size(40.dp)
-            )
-            Text(
-                text = "${item.main.temp.toInt()}°",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-*/
 @Composable
 fun ShowErrorMessage(errorMsg: Throwable) {
     Text(text = errorMsg.toString(), fontSize = 24.sp)

@@ -65,37 +65,41 @@ fun BottomNavigationBar(navController: NavHostController) {
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.height(80.dp)
     ) {
-        getBottomNavigationList(LocalContext.current).forEachIndexed { index, item ->
+        getBottomNavigationList(LocalContext.current).forEach { item ->
             val isSelected = currentDestination?.route == item.route::class.java.simpleName
 
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
-                    // Navigate to the selected route
                     navController.navigate(item.route::class.java.simpleName) {
+                        // Avoid multiple copies of the same destination
+                        launchSingleTop = true
+                        // Restore state when reselecting a previously selected item
+                        restoreState = true
+                        // Pop up to the start destination of the graph to
+                        // avoid building up a large stack of destinations
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 },
                 icon = {
-                    Icon(imageVector = item.icon, contentDescription = item.title)
-                },
-                label = {
-                    Text(
-                        text = item.title,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.secondary
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.title
                     )
                 },
+                label = {
+                    Text(text = item.title)
+                },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.surface,
-                    indicatorColor = MaterialTheme.colorScheme.primary
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
     }
 }
-

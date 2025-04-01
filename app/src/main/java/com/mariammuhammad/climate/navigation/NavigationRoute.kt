@@ -13,7 +13,7 @@ sealed class NavigationRoute() {
     object WeatherAlertScreen : NavigationRoute()
 
     @Serializable
-    data object FavoriteScreen : NavigationRoute()
+     object FavoriteScreen : NavigationRoute()
 
     @Serializable
     object SettingScreen : NavigationRoute()

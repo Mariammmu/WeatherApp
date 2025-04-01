@@ -6,6 +6,8 @@ import com.mariammuhammad.climate.utiles.Constants
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
+//api.openweathermap.org/data/2.5/weather?q=London&appid=d8624de82ec00c03cb20e4952badd072
+//api.openweathermap.org/data/2.5/forecast?q=cairo&appid=d8624de82ec00c03cb20e4952badd072
 
 interface WeatherService {
 
@@ -18,14 +20,14 @@ interface WeatherService {
         @Query("appid") apiKey: String= Constants.ApiKey
         ): CurrentWeather
 
-//    @GET("forecast")
-//    suspend fun getWeatherByCity(
-//        @Query("q")
-//        city: String,
-//        @Query("appid")
-//        appid: String = "d8624de82ec00c03cb20e4952badd072"
-//
-//    ):  Response<CurrentWeather>
+    @GET("forecast")
+    suspend fun getWeatherByCity(
+        @Query("q")
+        city: String,
+        @Query("appid")
+        appid: String = "d8624de82ec00c03cb20e4952badd072"
+
+    ):  Response<CurrentWeather>
 
     @GET("forecast")
     suspend fun get5DaysEvery3Hours(
