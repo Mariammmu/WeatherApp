@@ -20,5 +20,6 @@
     <string name="ultraviolet">Ultraviolet</string>
     <string name="weather_details">Weather Details</string>
     <string name="hourly_details">Hourly Details</string>
-    <string name="next_5_days">Next 5 Days</string>
+    <string name="next_5_days">Next Days</string>
+    <string name="save_location">Saved Locations</string>
 </resources>

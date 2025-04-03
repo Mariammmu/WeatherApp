@@ -66,12 +66,12 @@ dependencies {
     implementation(libs.play.services.location)
 
 
+//okhttp
     implementation ("com.squareup.okhttp3:okhttp:4.9.1")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
 
     //splashScreen
     implementation ("androidx.core:core-splashscreen:1.0.0")
-
 
     //Room
     val room_version = "2.6.1"
@@ -94,7 +94,59 @@ dependencies {
     // Lifecycle dependencies
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
 
-    implementation ("com.google.maps.android:maps-compose:6.5.2")
+
+    // Google Maps SDK for Android
+    implementation("com.google.maps.android:maps-compose:6.5.2")
+   implementation("com.google.android.libraries.places:places:3.3.0")
+
+    //Testing
+    testImplementation ("junit:junit:4.13.2")
+    androidTestImplementation ("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.6.1")
+
+    //MockK
+    testImplementation ("io.mockk:mockk-android:1.13.17")
+    testImplementation ("io.mockk:mockk-agent:1.13.17")
+
+    //kotlinx-coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+    androidTestImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+
+
+    // InstantTaskExecutorRule
+    testImplementation ("androidx.arch.core:core-testing:2.1.0")
+    androidTestImplementation ("androidx.arch.core:core-testing:2.1.0")
+
+    // AndroidX and Robolectric
+    testImplementation ("androidx.test.ext:junit-ktx:1.1.5")
+    testImplementation ("androidx.test:core-ktx:1.5.0")
+    testImplementation ("org.robolectric:robolectric:4.11")
+
+    // hamcrest
+    testImplementation ("org.hamcrest:hamcrest:2.2")
+    testImplementation ("org.hamcrest:hamcrest-library:2.2")
+    androidTestImplementation ("org.hamcrest:hamcrest:2.2")
+    androidTestImplementation ("org.hamcrest:hamcrest-library:2.2")
+
+    // AndroidX Test - Instrumented testing
+    androidTestImplementation ("androidx.test:core:1.6.1")
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.6.1")
+
+    // AndroidX Test - JVM testing
+    testImplementation ("androidx.test:core-ktx:1.6.1")
+
+    // Dependencies for local unit tests
+    testImplementation ("junit:junit:4.13.2")
+    testImplementation ("org.hamcrest:hamcrest:2.2")
+    testImplementation ("androidx.arch.core:core-testing:2.2.0")
+    testImplementation ("org.robolectric:robolectric:4.12")
+
+//    implementation ("com.google.maps.android:maps-compose:4.3.0")
+//    implementation ("com.google.android.gms:play-services-maps:19.1.0")
+//    implementation ("com.google.android.gms:play-services-location:21.3.0")
+//    implementation ("com.google.android.libraries.places:places:4.2.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

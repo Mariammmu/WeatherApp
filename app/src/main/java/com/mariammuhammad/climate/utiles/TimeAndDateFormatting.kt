@@ -40,4 +40,7 @@ import java.util.Locale
         } else ""
     }
 
+     fun getCountryName(countryCode: String?): String {
+         return countryCode?.let { Locale("", it).displayCountry } ?: "Country"
+     }
 }

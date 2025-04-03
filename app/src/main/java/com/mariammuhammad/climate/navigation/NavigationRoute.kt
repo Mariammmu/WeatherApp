@@ -10,10 +10,15 @@ sealed class NavigationRoute() {
     object HomeScreen : NavigationRoute()
 
     @Serializable
+    data class HomeFav (val favLat:String ="", val favLon:String = "") : NavigationRoute()
+    @Serializable
     object WeatherAlertScreen : NavigationRoute()
 
     @Serializable
      object FavoriteScreen : NavigationRoute()
+
+    @Serializable
+    object MapScreen : NavigationRoute()
 
     @Serializable
     object SettingScreen : NavigationRoute()

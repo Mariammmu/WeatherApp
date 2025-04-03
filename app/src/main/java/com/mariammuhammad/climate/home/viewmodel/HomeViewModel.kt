@@ -26,7 +26,7 @@ class HomeViewModel( val repo: WeatherRepository) : ViewModel() {
 
 
      fun getCurrentWeather(lat: Double, lon: Double, units: String, lang: String) {
-         Log.i("TAG", "getCurrentWeather: ")
+         //Log.i("TAG", "getCurrentWeather: ")
         viewModelScope.launch {
 
             repo.getWeatherForecast(lat, lon, units, lang).collect { response ->
@@ -41,16 +41,16 @@ class HomeViewModel( val repo: WeatherRepository) : ViewModel() {
     }
 
      fun get5DaysWeather(lat: Double, lon: Double, tempUnit: String, lang: String) {
-         Log.i("TAG", "get5DaysWeatherViewModelScope: Success ")
+       //  Log.i("TAG", "get5DaysWeatherViewModelScope: Success ")
 
          viewModelScope.launch {
             repo.get5DaysEvery3Hours(lat, lon, tempUnit, lang).collect { response ->
                 try {
-                    Log.i("TAG", "get5DaysWeatherViewModel: Success ")
+                //    Log.i("TAG", "get5DaysWeatherViewModel: Success ")
 
                     _nextDaysWeather.value = Response.Success(response)
                 } catch (th: Throwable) {
-                    Log.i("TAG", "get5DaysWeatherViewModel: Failure ")
+                  //  Log.i("TAG", "get5DaysWeatherViewModel: Failure ")
 
                     _nextDaysWeather.value =
                         Response.Failure(Throwable("Error retrieving 5-day forecast"))

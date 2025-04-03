@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -66,7 +67,9 @@ class SettingsScreen {
 
             SettingOption(
                 title = "Wind Speed Unit",
-              //  icon = painterResource(id = R.drawable.air_svgrepo_com),
+//                icon= Icon(
+//                    painter = painterResource(id = R.drawable.ic_add_location), // Use your custom vector image here
+//                    contentDescription = "Add location")
                 Icons.Default.Place,
                 options = listOf("meter/sec", "mile/hour"),
                 selectedOption = "meter/sec"

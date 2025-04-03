@@ -70,7 +70,7 @@ import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.ListDaysDetails
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
-import com.mariammuhammad.climate.navigation.BottomNavigationBar
+//import com.mariammuhammad.climate.navigation.BottomNavigationBar
 import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.ImageIcon
 import com.mariammuhammad.climate.utiles.LocationPermissionManager
@@ -79,11 +79,13 @@ import com.mariammuhammad.climate.utiles.Response
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dateTimeFormater
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dayFormater
+import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.getCountryName
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.timeFormater
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import java.util.Calendar
 import java.util.Date
+
 //AIzaSyA5rMOFNsoUcLMTq3YiLny0A0mG48lmO3c
 //Use this: AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
 //AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
@@ -200,9 +202,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             val dailyForecast = when (nextDaysWeather) {
                 is Response.Success -> {
                     val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
-                    // Group by day and take first item of each day
-                    forecast.list.groupBy { it.dt.dateTimeFormater() }
-                        .values?.map { it.first() }?.take(5) ?: emptyList()
+                    forecast.list.groupBy { it.dt.dayFormater() }
+                        .values.map { it.first() }.take(5) ?: emptyList()
                 }
 
                 else -> emptyList()
@@ -320,7 +321,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
                             // location
                             Text(
-                                text = "${currentWeatherDetails.name}, ${currentWeatherDetails.sys.country}",
+                                text = "${currentWeatherDetails.name}, ${
+                                    getCountryName(currentWeatherDetails.sys.country
+                                    )
+                                }",
                                 fontSize = 16.sp,
                                 fontFamily = FontFamily(Font(R.font.alfa_slab)),
                                 color = Color.White,
@@ -599,18 +603,23 @@ fun DailyForecastItem(day: ListDaysDetails) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )  {
                 Text(
                     text = day.dt.dayFormater(),
                     color = Color.White,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.alfa_slab))
                 )
             }
 
             GlideImage(
                 model = ImageIcon.getWeatherImage(day.weather.first().icon),
                 contentDescription = "Weather icon",
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(40.dp),
+
             )
 
             Column(horizontalAlignment = Alignment.End) {

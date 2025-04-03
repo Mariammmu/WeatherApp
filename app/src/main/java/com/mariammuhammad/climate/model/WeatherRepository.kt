@@ -1,5 +1,7 @@
 package com.mariammuhammad.climate.model
 
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.mariammuhammad.climate.model.pojo.City
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
@@ -28,4 +30,7 @@ interface WeatherRepository {
 
     suspend fun deleteFavCityLocal(city: City):Int
 
-}
+    suspend fun getPlaceOnMap(searchText:String,placesClient: PlacesClient) :Flow<LatLng>
+
+
+    }
