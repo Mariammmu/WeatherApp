@@ -8,6 +8,8 @@ import com.google.android.libraries.places.api.net.PlacesClient
 //import com.google.android.libraries.places.api.net.PlacesClient
 import com.mariammuhammad.climate.model.WeatherRepository
 import com.mariammuhammad.climate.model.pojo.City
+import com.mariammuhammad.climate.model.pojo.CurrentWeather
+import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,29 +20,41 @@ import kotlinx.coroutines.launch
 
 class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel() {
 
-    // StateFlow to represent the list of favorite cities wrapped in a Response
     val _favoriteCities = MutableStateFlow<Response<List<City>>>(Response.Loading)
     val favoriteCities: StateFlow<Response<List<City>>> = _favoriteCities
 
     private val _searchPlaceCoordinates = MutableStateFlow<Response<LatLng>>(Response.Loading)
     val searchPlaceCoordinates: StateFlow<Response<LatLng>> = _searchPlaceCoordinates
 
+    private val _favCityCurrentWeather = MutableStateFlow<Response<CurrentWeather>>(Response.Loading)
+    val favCityCurrentWeather =_favCityCurrentWeather.asStateFlow()
 
-    // To initialize favoriteCities, we make the first fetch and handle success/failure
-//    init {
-//        fetchFavoriteCities()
-//    }
+    private val _fiveDayFavCityWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
+    val fiveDayFavoriteCity = _fiveDayFavCityWeather.asStateFlow()
 
-    private fun fetchFavoriteCities() {
-        viewModelScope.launch {
-            _favoriteCities.value = Response.Loading // Set Loading state
 
+    fun getRemoteFavCityCurrentWeather(lat: Double, lon: Double, units: String, lang: String) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.getFavCitiesLocal().collect { cities ->
-                    _favoriteCities.value = Response.Success(cities) // Set Success state with the list of cities
-                }
+                repository.getWeatherForecast(lat, lon, units, lang)
+                    .collect { response ->
+                        _favCityCurrentWeather.value = Response.Success(response)
+                    }
             } catch (e: Exception) {
-                _favoriteCities.value = Response.Failure(e) // Handle failure using Response.Failure
+                _favCityCurrentWeather.value = Response.Failure(e)
+            }
+        }
+    }
+
+    fun getRemote5Days3HoursWeather(lat: Double, lon: Double, units: String, lang: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.get5DaysEvery3Hours(lat, lon, units, lang)
+                    .collect { response ->
+                        _fiveDayFavCityWeather.value = Response.Success(response)
+                    }
+            } catch (e: Exception) {
+                _fiveDayFavCityWeather.value = Response.Failure(e)
             }
         }
     }
@@ -48,13 +62,12 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
     fun addFavoriteCity(city: City) {
         viewModelScope.launch {
             try {
-                repository.insertFavCityLocal(city)
+                repository.addFavCity(city)
 
-                // Update the state by adding the new city to the list
                 val currentCities = (_favoriteCities.value as? Response.Success)?.data ?: emptyList()
                 _favoriteCities.value = Response.Success(currentCities + city)
             } catch (e: Exception) {
-                _favoriteCities.value = Response.Failure(e) // Handle failure using Response.Failure
+                _favoriteCities.value = Response.Failure(e)
             }
         }
     }
@@ -62,8 +75,7 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
     fun removeFavoriteCity(city: City) {
         viewModelScope.launch {
             try {
-                repository.deleteFavCityLocal(city)
-                // Update the state by removing the city from the list
+                repository.deleteFavCity(city)
                 val currentCities = (_favoriteCities.value as? Response.Success)?.data ?: emptyList()
                 _favoriteCities.value = Response.Success(currentCities - city)
             } catch (e: Exception) {
@@ -73,12 +85,11 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
     }
 
 
-    fun getLocalFavCities() {
+    fun getFavCities() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.getFavCitiesLocal()
+                repository.getAllFavCities()
                     .catch { exception ->
-                        // Handle failure by emitting Response.Failure
                         _favoriteCities.value = Response.Failure(exception)
                     }
                     .collect { cities ->

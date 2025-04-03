@@ -29,6 +29,13 @@ import com.mariammuhammad.climate.settings.view.SettingsScreen
 fun NavigationGraph(navController: NavHostController) {
     val context = LocalContext.current
 
+    fun navigateToMapScreen() {
+        navController.navigate(NavigationRoute.MapScreen::class.java.simpleName)
+    }
+    fun navigateToHomeScreen() {
+        navController.navigate(NavigationRoute.HomeScreen::class.java.simpleName)
+    }
+
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
 
@@ -43,7 +50,8 @@ fun NavigationGraph(navController: NavHostController) {
                     factory = WeatherFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao())
+                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao())
                         )
                     )
                 )
@@ -59,27 +67,27 @@ fun NavigationGraph(navController: NavHostController) {
                     factory = FavoriteViewModelFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao())
+                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao())
                         )
                     )
                 )
-                FavoriteScreen(favoriteViewModel)
+                FavoriteScreen(favoriteViewModel,  onMapButtonClick = { navigateToMapScreen() } )
             }
             composable(NavigationRoute.MapScreen::class.java.simpleName) {
                 val favoriteViewModel: FavoriteViewModel = viewModel(
                     factory = FavoriteViewModelFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao())
+                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao())
                         )
                     )
                 )
 
-                                MapScreen(
-                                favoriteViewModel
-                //onBack = { navController.popBackStack() }
-                )
+                MapScreen(favoriteViewModel)
             }
+
 
             composable(NavigationRoute.SettingScreen::class.java.simpleName) {
                 SettingsScreen()

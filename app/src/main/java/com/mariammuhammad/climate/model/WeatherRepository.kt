@@ -23,14 +23,19 @@ interface WeatherRepository {
         lan: String
     ): Flow<NextDaysWeather>
 
-    fun getFavCitiesLocal():Flow<List<City>>
+    fun getAllFavCities():Flow<List<City>>
 
-    suspend fun insertFavCityLocal(city: City):Long
+    suspend fun addFavCity(city: City):Long
 
 
-    suspend fun deleteFavCityLocal(city: City):Int
+    suspend fun deleteFavCity(city: City):Int
 
     suspend fun getPlaceOnMap(searchText:String,placesClient: PlacesClient) :Flow<LatLng>
 
+    fun getAllCurrentWeatherFromRoom(): Flow<NextDaysWeather>
+
+    suspend fun insertCurrentWeather(weatherResponse: NextDaysWeather)
+
+    suspend fun deleteStoredCurrentWeather()
 
     }

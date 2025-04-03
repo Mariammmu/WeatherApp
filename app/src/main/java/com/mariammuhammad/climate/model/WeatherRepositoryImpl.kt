@@ -30,16 +30,28 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
         return remoteDataSource.get5DaysEvery3Hours(lat, lon, units, lan)
     }
 
-    override fun getFavCitiesLocal():Flow<List<City>>{
-        return localDataSource.getFavCitiesLocal()
+    override fun getAllCurrentWeatherFromRoom(): Flow<NextDaysWeather> {
+        return localDataSource.getAllStoredWeather()
     }
 
-    override suspend fun insertFavCityLocal(city: City):Long{
-        return localDataSource.insertFavCityLocal(city)
+    override suspend fun insertCurrentWeather(weatherResponse: NextDaysWeather) {
+        localDataSource.addCurrentWeather(weatherResponse)
     }
 
-    override suspend fun deleteFavCityLocal(city: City):Int{
-        return localDataSource.deleteFavCityLocal(city)
+    override suspend fun deleteStoredCurrentWeather() {
+        localDataSource.removeAllWeather()
+    }
+
+    override fun getAllFavCities():Flow<List<City>>{
+        return localDataSource.getAllFavCities()
+    }
+
+    override suspend fun addFavCity(city: City):Long{
+        return localDataSource.addFavCity(city)
+    }
+
+    override suspend fun deleteFavCity(city: City):Int{
+        return localDataSource.deleteFavCity(city)
     }
 
     override suspend fun getPlaceOnMap(searchText:String, placesClient: PlacesClient) :Flow<LatLng>{

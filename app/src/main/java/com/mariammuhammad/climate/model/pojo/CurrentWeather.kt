@@ -1,5 +1,6 @@
 package com.mariammuhammad.climate.model.pojo
 
+
 data class CurrentWeather(
     val base: String,
     val clouds: Clouds,

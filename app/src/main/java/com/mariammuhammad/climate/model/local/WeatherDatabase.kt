@@ -6,13 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.mariammuhammad.climate.model.pojo.City
+import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.utiles.CityConverter
+import com.mariammuhammad.climate.utiles.Converters
 import com.mariammuhammad.climate.utiles.CoordTypeConverter
 
-@Database(entities = [City::class], version = 1)
-@TypeConverters(CoordTypeConverter::class)
+@Database(entities = [City::class, NextDaysWeather::class], version = 2)
+//@TypeConverters(Converters::class)
+@TypeConverters(Converters::class, CityConverter::class,CoordTypeConverter::class)
+
     abstract class WeatherDataBase: RoomDatabase() {
 
         abstract fun getFavoritesDao():FavoritesDao
+        abstract fun getWeatherDao(): WeatherDao
 
         companion object{ // store variables or functions that are shared among all instances of the class.
             @Volatile //the value of INSTANCE is updated across all threads, which is important for thread safety.

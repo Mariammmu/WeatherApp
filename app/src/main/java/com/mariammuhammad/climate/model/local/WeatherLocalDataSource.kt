@@ -2,20 +2,35 @@ package com.mariammuhammad.climate.model.local
 
 import android.content.Context
 import com.mariammuhammad.climate.model.pojo.City
+import com.mariammuhammad.climate.model.pojo.NextDaysWeather
 import kotlinx.coroutines.flow.Flow
 
-class WeatherLocalDataSource (private val favoritesDao: FavoritesDao) {
+class WeatherLocalDataSource (
+    private val favoritesDao: FavoritesDao,
+    private val weatherDao: WeatherDao) : IWeatherLocalDataSource {
 
-    fun getFavCitiesLocal(): Flow<List<City>> {
+    override fun getAllFavCities(): Flow<List<City>> {
         return favoritesDao.getFavCities()
     }
 
-    suspend fun insertFavCityLocal(city: City):Long{
+    override suspend fun addFavCity(city: City):Long{
         return favoritesDao.insertFavCity(city)
     }
 
-    suspend fun deleteFavCityLocal(city: City):Int{
+    override suspend fun deleteFavCity(city: City):Int{
         return favoritesDao.deleteFavCity(city)
+    }
+
+     override fun getAllStoredWeather(): Flow<NextDaysWeather> {
+        return weatherDao.getStoredWeather()
+    }
+
+     override suspend fun addCurrentWeather(weatherResponse: NextDaysWeather) {
+        weatherDao.insertAllCurrentWeather(weatherResponse)
+    }
+
+     override suspend fun removeAllWeather() {
+        weatherDao.deleteAllWeather()
     }
 
 }

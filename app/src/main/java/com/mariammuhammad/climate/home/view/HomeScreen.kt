@@ -61,7 +61,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import com.google.gson.Gson
@@ -70,6 +72,7 @@ import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.ListDaysDetails
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.settings.Settings
 //import com.mariammuhammad.climate.navigation.BottomNavigationBar
 import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.ImageIcon
@@ -81,10 +84,7 @@ import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dateTimeFormater
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dayFormater
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.getCountryName
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.timeFormater
-import kotlinx.coroutines.coroutineScope
-import kotlinx.serialization.json.Json
-import java.util.Calendar
-import java.util.Date
+
 
 //AIzaSyA5rMOFNsoUcLMTq3YiLny0A0mG48lmO3c
 //Use this: AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
@@ -99,6 +99,12 @@ private var windSpeedUnit = ""
 fun HomeScreen(homeViewModel: HomeViewModel) {
 
     var context = LocalContext.current
+    val snackBarHostState = remember { SnackbarHostState() }
+//    val weatherPrefs = remember { Settings.WeatherSettings.getInstance(context) }
+    var favLat by rememberSaveable { mutableStateOf(0.0) }
+    var favLon by rememberSaveable { mutableStateOf(0.0) }
+    var defaultLat by remember { mutableStateOf(0.0) }
+    var defaultLon by remember { mutableStateOf(0.0) }
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
     val locationUpdate = LocationUpdate(context)
@@ -168,6 +174,40 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
+
+//    val tempUnit = when(weatherPrefs.getTempUnit()){
+//        "c" -> "metric"
+//        "k" -> "standard"
+//        "f" -> "imperial"
+//        else -> "metric"
+//    }
+//
+//    val language = when(weatherPrefs.getLanguage()){
+//        "en" -> "en"
+//        "ar" -> "ar"
+//        else -> "en"
+//    }
+//    if((favLat.toString().isNotEmpty() && favLon.toString().isNotEmpty())){
+//        homeViewModel.getCurrentWeather(favLat,
+//            favLon,
+//            tempUnit,
+//            language)
+//
+//        homeViewModel.get5DaysWeather(favLat,
+//            favLon,
+//            tempUnit,
+//            language)
+//    }else{
+//        homeViewModel.getCurrentWeather(defaultLat,
+//            defaultLon,
+//            tempUnit,
+//            language)
+//
+//        homeViewModel.get5DaysWeather(defaultLat,
+//            defaultLon,
+//            tempUnit,
+//        language)
+//    }
 
     when (currentWeather) { //child
         is Response.Failure -> {

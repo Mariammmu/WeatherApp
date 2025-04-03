@@ -24,6 +24,9 @@ class HomeViewModel( val repo: WeatherRepository) : ViewModel() {
     private val _nextDaysWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
     val nextDaysWeather: StateFlow<Response<NextDaysWeather>> = _nextDaysWeather
 
+    private val _storedWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
+    val storedWeather: StateFlow<Response<NextDaysWeather>> = _storedWeather
+
 
      fun getCurrentWeather(lat: Double, lon: Double, units: String, lang: String) {
          //Log.i("TAG", "getCurrentWeather: ")
@@ -55,6 +58,38 @@ class HomeViewModel( val repo: WeatherRepository) : ViewModel() {
                     _nextDaysWeather.value =
                         Response.Failure(Throwable("Error retrieving 5-day forecast"))
                 }
+            }
+        }
+    }
+
+    fun getStoredWeather() {
+        viewModelScope.launch {
+            repo.getAllCurrentWeatherFromRoom().collect { response ->
+                try {
+                    _storedWeather.value = Response.Success(response)
+                } catch (th: Throwable) {
+                    _storedWeather.value = Response.Failure(Throwable("Error retrieving stored weather"))
+                }
+            }
+        }
+    }
+
+    fun insertCurrentWeather(weatherResponse: NextDaysWeather) {
+        viewModelScope.launch {
+            try {
+                repo.insertCurrentWeather(weatherResponse)
+            } catch (th: Throwable) {
+                _storedWeather.value = Response.Failure(Throwable("Error inserting weather data"))
+            }
+        }
+    }
+
+    fun deleteStoredWeather() {
+        viewModelScope.launch {
+            try {
+                repo.deleteStoredCurrentWeather()
+            } catch (th: Throwable) {
+                _storedWeather.value = Response.Failure(Throwable("Error deleting stored weather data"))
             }
         }
     }
