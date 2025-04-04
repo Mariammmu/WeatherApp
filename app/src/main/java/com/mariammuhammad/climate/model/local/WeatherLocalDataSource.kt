@@ -39,7 +39,7 @@ class WeatherLocalDataSource (
         return alarmDao.getAllAlarms()
     }
 
-    override suspend fun insertAlarm(alarm: Alarm):Long{
+    override suspend fun addAlarm(alarm: Alarm):Long{
         return alarmDao.addAlarm(alarm)
     }
 

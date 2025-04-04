@@ -12,6 +12,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.mariammuhammad.climate.Alert.view.WeatherAlarmScreen
+import com.mariammuhammad.climate.Alert.viewmodel.AlertViewModel
+import com.mariammuhammad.climate.Alert.viewmodel.AlertViewModelFactory
 import com.mariammuhammad.climate.favorite.view.FavoriteScreen
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModelFactory
@@ -22,6 +25,7 @@ import com.mariammuhammad.climate.map.view.MapScreen
 import com.mariammuhammad.climate.model.WeatherRepositoryImpl
 import com.mariammuhammad.climate.model.local.WeatherDataBase
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
+import com.mariammuhammad.climate.model.pojo.Alarm
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
 import com.mariammuhammad.climate.settings.view.SettingsScreen
@@ -36,7 +40,7 @@ fun NavigationGraph(navController: NavHostController) {
     }
 
     fun navigateToHomeScreen(favLat: Double, favLon: Double) {
-        navController.navigate(NavigationRoute.HomeScreen(favLat,favLon))
+        navController.navigate(NavigationRoute.HomeScreen(favLat, favLon))
     }
 
 
@@ -50,18 +54,18 @@ fun NavigationGraph(navController: NavHostController) {
             modifier = Modifier.padding(paddingValues)
         ) {
 
-            composable<NavigationRoute.SplashScreen> {navBackStackEntry ->
+            composable<NavigationRoute.SplashScreen> { navBackStackEntry ->
                 SplashScreen(
                     navigateToHome = {
-                        navController.navigate(NavigationRoute.HomeScreen()){
-                            popUpTo<NavigationRoute.SplashScreen>{
+                        navController.navigate(NavigationRoute.HomeScreen()) {
+                            popUpTo<NavigationRoute.SplashScreen> {
                                 inclusive = true
                             }
                         }
                     }
                 )
             }
-            composable <NavigationRoute.HomeScreen>{ backStackEntry ->//("homeScreen/{favLat}/{favLon}") { backStackEntry ->
+            composable<NavigationRoute.HomeScreen> { backStackEntry ->//("homeScreen/{favLat}/{favLon}") { backStackEntry ->
 //                val favLat = backStackEntry.arguments?.getString("favLat")?.toDouble() ?: 0.0
 //                val favLon = backStackEntry.arguments?.getString("favLon")?.toDouble() ?: 0.0
                 val data = backStackEntry.toRoute<NavigationRoute.HomeScreen>()
@@ -99,7 +103,7 @@ fun NavigationGraph(navController: NavHostController) {
 
                     onFavPlaceClick = { favLat, favLon ->
                         Log.i("TAG", "NavigationGraph: ${favLat}/${favLon}")
-                       navigateToHomeScreen(favLat, favLon)
+                        navigateToHomeScreen(favLat, favLon)
                     }
 
                 )
@@ -124,11 +128,27 @@ fun NavigationGraph(navController: NavHostController) {
 
 
             composable<NavigationRoute.WeatherAlertScreen>() {
-                // Implement the WeatherAlertScreen UI
+
+                val alertViewModel: AlertViewModel = viewModel(
+                    factory = AlertViewModelFactory(
+                        WeatherRepositoryImpl(
+                            WeatherRemoteDataSource(weatherService),
+                            WeatherLocalDataSource(
+                                WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao(),
+                                WeatherDataBase.getInstance(context).getAlarmDao()
+                            )
+                        )
+                    )
+                )
+                WeatherAlarmScreen(
+                    alertViewModel,
+                    //onNavigateToAlarmDetail=
+                    )
             }
 
             composable<NavigationRoute.SettingsScreen> {
-                SettingsScreen(viewModel = viewModel ())
+                SettingsScreen()
             }
         }
     }

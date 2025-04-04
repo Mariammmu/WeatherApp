@@ -15,7 +15,7 @@ interface IWeatherLocalDataSource {
     suspend fun removeAllWeather()
 
     fun getAllAlarms():Flow<List<Alarm>>
-    suspend fun insertAlarm(alarm: Alarm):Long
+    suspend fun addAlarm(alarm: Alarm):Long
     suspend fun deleteAlarm(alarm:Alarm):Int
     suspend fun deleteAlarmById(alarmId:Int)
 

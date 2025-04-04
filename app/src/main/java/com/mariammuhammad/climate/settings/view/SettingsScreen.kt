@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +50,7 @@ import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.settings.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreen(viewModel: com.mariammuhammad.climate.settings.view.SettingsViewModel) {
+fun SettingsScreen( ) {
     // val state by viewModel.state.collectAsState()
 
     Column(
@@ -61,22 +62,21 @@ fun SettingsScreen(viewModel: com.mariammuhammad.climate.settings.view.SettingsV
     ) {
         // Language Card
         SettingsCard(
-            title = "Language",
+            title = stringResource(R.string.language),
             icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
             options = listOf("Arabic", "English", "Default"),
             selectedOption = "English",//state.language,
-            onOptionSelected = { viewModel.setLanguage(it) }
+            //onOptionSelected = //{ viewModel.setLanguage(it) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Temperature Unit Card
         SettingsCard(
             title = "Temp Unit",
             icon = painterResource(id = R.drawable.speedometer_color_icon),
             options = listOf("Celsius °C", "Kelvin °K", "Fahrenheit °F"),
-            selectedOption = "Celsius",//state.tempUnit,
-            onOptionSelected = { viewModel.setTempUnit(it) }
+            selectedOption = "Celsius °C",//state.tempUnit,
+           // onOptionSelected = { viewModel.setTempUnit(it) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +87,7 @@ fun SettingsScreen(viewModel: com.mariammuhammad.climate.settings.view.SettingsV
             icon = painterResource(id = R.drawable.google_map_icon),
             options = listOf("Gps", "Map"),
             selectedOption = "Gps",//state.locationMethod,
-            onOptionSelected = { viewModel.setLocationMethod(it) }
+           // onOptionSelected = { viewModel.setLocationMethod(it) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -98,7 +98,7 @@ fun SettingsScreen(viewModel: com.mariammuhammad.climate.settings.view.SettingsV
             icon = painterResource(id = R.drawable.cloud_wind_color_icon),
             options = listOf("meter/sec", "mile/hour"),
             selectedOption = "meter/sec",//state.windSpeedUnit,
-            onOptionSelected = { viewModel.setWindSpeedUnit(it) }
+           // onOptionSelected = { viewModel.setWindSpeedUnit(it) }
         )
 
 //        if (!state.isInternetConnected) {
@@ -120,7 +120,7 @@ private fun SettingsCard(
     icon: Painter,
     options: List<String>,
     selectedOption: String,
-    onOptionSelected: (String) -> Unit
+   // onOptionSelected: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,13 +157,11 @@ private fun SettingsCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            // .weight(2f)
-//                            .padding(horizontal = 4.dp)
-                            .clickable { onOptionSelected(option) }
+                          //  .clickable { onOptionSelected(option) }
                     ) {
                         RadioButton(
                             selected = option == selectedOption,
-                            onClick = { onOptionSelected(option) },
+                            onClick = {},//{ onOptionSelected(option) },
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = colorResource(R.color.dark_purple),
                                 unselectedColor = Color.Gray
@@ -182,39 +180,14 @@ private fun SettingsCard(
     }
 }
 
-// ViewModel remains the same
-class SettingsViewModel : ViewModel() {
-    private val _state = mutableStateOf(SettingsState())
-    val state: State<SettingsState> = _state
 
-    fun setLanguage(language: String) {
-        _state.value = _state.value.copy(language = language)
-    }
-
-    fun setTempUnit(unit: String) {
-        _state.value = _state.value.copy(tempUnit = unit)
-    }
-
-    fun setLocationMethod(method: String) {
-        _state.value = _state.value.copy(locationMethod = method)
-    }
-
-    fun setWindSpeedUnit(unit: String) {
-        _state.value = _state.value.copy(windSpeedUnit = unit)
-    }
-
-    fun setInternetStatus(connected: Boolean) {
-        _state.value = _state.value.copy(isInternetConnected = connected)
-    }
-}
-
-data class SettingsState(
-    val language: String = "English",
-    val tempUnit: String = "Celsius °C",
-    val locationMethod: String = "Gps",
-    val windSpeedUnit: String = "meter/sec",
-    val isInternetConnected: Boolean = true
-)
+//data class SettingsState(
+//    val language: String = "English",
+//    val tempUnit: String = "Celsius °C",
+//    val locationMethod: String = "Gps",
+//    val windSpeedUnit: String = "meter/sec",
+//    val isInternetConnected: Boolean = true
+//)
 //    @Composable
 //    fun SettingsScreen() {
 //        Column(
@@ -298,3 +271,30 @@ data class SettingsState(
 //            }
 //        }
 //    }
+
+/*
+class SettingsViewModel : ViewModel() {
+    private val _state = mutableStateOf(SettingsState())
+    val state: State<SettingsState> = _state
+
+    fun setLanguage(language: String) {
+        _state.value = _state.value.copy(language = language)
+    }
+
+    fun setTempUnit(unit: String) {
+        _state.value = _state.value.copy(tempUnit = unit)
+    }
+
+    fun setLocationMethod(method: String) {
+        _state.value = _state.value.copy(locationMethod = method)
+    }
+
+    fun setWindSpeedUnit(unit: String) {
+        _state.value = _state.value.copy(windSpeedUnit = unit)
+    }
+
+    fun setInternetStatus(connected: Boolean) {
+        _state.value = _state.value.copy(isInternetConnected = connected)
+    }
+}
+ */

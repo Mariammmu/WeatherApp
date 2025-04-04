@@ -51,15 +51,13 @@ fun FavoriteScreen(favViewModel: FavoriteViewModel, onMapButtonClick: () -> Unit
 
     favViewModel.getFavCities()
     val favCities = favViewModel.favoriteCities.collectAsStateWithLifecycle().value
-    val snackBarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick =
                       onMapButtonClick,
-//                   { navController.navigate(NavigationRoute.MapScreen::class.java.simpleName)}
-                   // MapScreen(favViewModel)
+
                 modifier = Modifier.padding(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add location")

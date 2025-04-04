@@ -3,6 +3,7 @@ package com.mariammuhammad.climate.model
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
+import com.mariammuhammad.climate.model.pojo.Alarm
 import com.mariammuhammad.climate.model.pojo.City
 import com.mariammuhammad.climate.model.pojo.CurrentWeather
 import com.mariammuhammad.climate.model.pojo.NextDaysWeather
@@ -57,4 +58,20 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
     override suspend fun getLocationOnMap(searchText:String, placesClient: PlacesClient) :Flow<LatLng>{
         return remoteDataSource.getLocationOnMap(searchText,placesClient)
        }
+
+    override fun getAlarms():Flow<List<Alarm>>{
+        return localDataSource.getAllAlarms()
+    }
+
+    override suspend fun insertAlarm(alarm: Alarm):Long{
+        return localDataSource.addAlarm(alarm)
+    }
+
+    override suspend fun deleteAlarm(alarm: Alarm):Int{
+        return localDataSource.deleteAlarm(alarm)
+    }
+
+    override suspend fun deleteAlarmById(alarmId:Int){
+        return localDataSource.deleteAlarmById(alarmId)
+    }
 }

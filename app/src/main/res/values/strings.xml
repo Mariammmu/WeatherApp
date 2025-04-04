@@ -22,4 +22,5 @@
     <string name="hourly_details">Hourly Details</string>
     <string name="next_5_days">Next Days</string>
     <string name="save_location">Add to Favorites</string>
+    <string name="language">Language</string>
 </resources>
