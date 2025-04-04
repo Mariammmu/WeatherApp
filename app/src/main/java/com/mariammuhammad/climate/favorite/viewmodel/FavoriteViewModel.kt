@@ -103,12 +103,11 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
     }
 
  //  /*
-   fun getPlaceOnMap(searchText: String, placesClient: PlacesClient) {
+   fun getLocationOnMap(searchText: String, placesClient: PlacesClient) {
         viewModelScope.launch {
             try {
-                repository.getPlaceOnMap(searchText, placesClient)
+                repository.getLocationOnMap(searchText, placesClient)
                     .catch { exception ->
-                        // Handle failure by emitting Response.Failure
                         _searchPlaceCoordinates.value = Response.Failure(exception)
                     }
                     .collect { coordinates ->

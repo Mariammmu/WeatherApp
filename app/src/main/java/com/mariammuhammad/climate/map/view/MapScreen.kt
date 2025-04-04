@@ -97,13 +97,14 @@ import com.mariammuhammad.climate.utiles.Response
 
         val scope = rememberCoroutineScope()
 
+
         if (!Places.isInitialized()) {
             Places.initialize(context, "AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y")
         }
 
         val places = remember { Places.createClient(context) }
 
-        favViewModel.getPlaceOnMap(searchText, places)
+        favViewModel.getLocationOnMap(searchText, places)
 
         Box(modifier = Modifier.fillMaxSize()) {
             LocationPickerMap(

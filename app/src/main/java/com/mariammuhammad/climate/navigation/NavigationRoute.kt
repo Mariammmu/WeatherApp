@@ -6,11 +6,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class NavigationRoute() {
-    @Serializable
-    object HomeScreen : NavigationRoute()
 
     @Serializable
-    data class HomeFav (val favLat:String ="", val favLon:String = "") : NavigationRoute()
+    object SplashScreen : NavigationRoute()
+    @Serializable
+    data class HomeScreen(val favLat:Double?=null, val favLon:Double?=null)  : NavigationRoute()
+
     @Serializable
     object WeatherAlertScreen : NavigationRoute()
 
@@ -21,7 +22,7 @@ sealed class NavigationRoute() {
     object MapScreen : NavigationRoute()
 
     @Serializable
-    object SettingScreen : NavigationRoute()
+    object SettingsScreen : NavigationRoute()
 }
 
 

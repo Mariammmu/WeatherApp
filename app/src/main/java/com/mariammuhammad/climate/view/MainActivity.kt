@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {  //AccessLocation
 
 
         lifecycleScope.launch{
-            delay(3000)
+            delay(2000)
             showSplashScreen.value =false
         }
 

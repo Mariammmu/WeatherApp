@@ -19,7 +19,6 @@ data class ListDaysDetails(
     val clouds: Clouds,
     val wind: Wind,
     val visibility: Long,
-    val pop: Long,
     val sys: Sys,
     @SerializedName("dt_txt")
     val dtTxt: String,

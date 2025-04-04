@@ -27,74 +27,66 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.mariammuhammad.climate.R
+import kotlinx.coroutines.delay
 
-class SplashScreen {
+//@Preview(showSystemUi = true)
+@Composable
+fun SplashScreen(
+    navigateToHome: () -> Unit
+) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.lottie_weather)
+    )
 
+    var isPlaying by remember { mutableStateOf(true) }
 
-   //@Preview(showSystemUi = true)
-    @Composable
-    fun SplashScreen(navController: NavController) {
-        val composition by rememberLottieComposition(
-            LottieCompositionSpec.RawRes(R.raw.lottie_weather)
-        )
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        isPlaying = isPlaying
+    )
 
-        var isPlaying by remember { mutableStateOf(true) }
+//    LaunchedEffect(key1 = progress) {
+//        if (progress == 0f) {
+//            isPlaying = true
+//        }
+//        if (progress == 1f) {
+//            isPlaying = false
+//        }
+//
+//    }
 
-        val progress by animateLottieCompositionAsState(
-            composition = composition,
-            isPlaying = isPlaying
-        )
-
-        LaunchedEffect(key1 = progress) {
-            if (progress == 0f) {
-                isPlaying = true
-            }
-            if (progress == 1f) {
-                isPlaying = false
-            }
-
-        }
-        //background( Brush.verticalGradient(
-        //            colors = listOf(Color.Cyan, Color.Magenta))),
+    LaunchedEffect(key1 = Unit) {
+        delay(10000L)
+        navigateToHome()
+    }
+    //background( Brush.verticalGradient(
+    //            colors = listOf(Color.Cyan, Color.Magenta))),
 //.background(Color.Transparent),
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = colorResource(R.color.background)),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = colorResource(R.color.background)),
 //              .background(brush = Brush.linearGradient(
 //                colors = listOf(colorResource(R.color.background),
 //                    colorResource(R.color.violet))
 //                                )),
-                    verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
-            LottieAnimation(
-                composition = composition,
-                modifier = Modifier.size(400.dp),
-                progress = progress
-            )
+        LottieAnimation(
+            composition = composition,
+            modifier = Modifier.size(400.dp),
+            progress = progress
+        )
 
-            Text(
-                stringResource(R.string.welcome_app),
-                fontSize = 24.sp, fontWeight = FontWeight.Bold,
-                color = colorResource(R.color.off_white),
-                fontFamily = FontFamily(Font(R.font.pacifico))
-            )
-        }
-
-    }
-
-    @Composable
-    fun FavoriteScreen(navController: NavController) {
-
-    }
-
-
-
-    @Composable
-    fun WeatherAlertScreen() {
-
+        Text(
+            stringResource(R.string.welcome_app),
+            fontSize = 24.sp, fontWeight = FontWeight.Bold,
+            color = colorResource(R.color.off_white),
+            fontFamily = FontFamily(Font(R.font.pacifico))
+        )
     }
 
 }
+

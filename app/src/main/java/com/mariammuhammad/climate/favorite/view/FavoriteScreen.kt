@@ -35,27 +35,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
-import com.mariammuhammad.climate.map.view.MapScreen
 import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.navigation.NavigationGraph
-import com.mariammuhammad.climate.navigation.NavigationRoute
 import com.mariammuhammad.climate.utiles.Response
 import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.getCountryName
 
 
 @Composable
-fun FavoriteScreen(favViewModel: FavoriteViewModel,  onMapButtonClick: () -> Unit) {
+fun FavoriteScreen(favViewModel: FavoriteViewModel, onMapButtonClick: () -> Unit, onFavPlaceClick: (Double, Double) -> Unit) {
 
     favViewModel.getFavCities()
     val favCities = favViewModel.favoriteCities.collectAsStateWithLifecycle().value
@@ -90,8 +82,9 @@ fun FavoriteScreen(favViewModel: FavoriteViewModel,  onMapButtonClick: () -> Uni
                             favCities is Response.Success -> {
                                 LazyColumn {
                                     items(favCities.data.size) { index ->
-                                        FavCities(city = favCities.data[index], favViewModel = favViewModel) {
-
+                                        FavCityItem(city = favCities.data[index],
+                                            favViewModel = favViewModel) { lat, lon ->
+                                            onFavPlaceClick(lat, lon)
                                         }
                                     }
                                 }
@@ -113,7 +106,7 @@ fun FavoriteScreen(favViewModel: FavoriteViewModel,  onMapButtonClick: () -> Uni
 }
 
 @Composable
-fun FavCities(city: City, favViewModel: FavoriteViewModel, onCardClick: () -> Unit) {
+fun FavCityItem(city: City, favViewModel: FavoriteViewModel, onCardClick: (Double, Double)-> Unit) {
     val countryName = getCountryName(city.country)
     val lat = city.coord.lat
     val lon = city.coord.lon
@@ -122,7 +115,7 @@ fun FavCities(city: City, favViewModel: FavoriteViewModel, onCardClick: () -> Un
         modifier = Modifier
             .padding(10.dp)
             .fillMaxWidth()
-            .clickable { onCardClick() },
+            .clickable { onCardClick(lat, lon) },
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
     ) {
         Column(

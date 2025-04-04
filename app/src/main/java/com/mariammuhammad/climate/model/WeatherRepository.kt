@@ -30,7 +30,7 @@ interface WeatherRepository {
 
     suspend fun deleteFavCity(city: City):Int
 
-    suspend fun getPlaceOnMap(searchText:String,placesClient: PlacesClient) :Flow<LatLng>
+    suspend fun getLocationOnMap(searchText:String,placesClient: PlacesClient) :Flow<LatLng>
 
     fun getAllCurrentWeatherFromRoom(): Flow<NextDaysWeather>
 

@@ -109,7 +109,7 @@ class HomeViewModelTest {
         homeViewModel.getCurrentWeather(52.5200, 13.4050, "metric", "en")
         advanceUntilIdle() //wait for coroutines to complete
 
-        // Then - Verify state and repository call
+        // Then
         val result = homeViewModel.currentWeather.value
         assertTrue(result is Response.Success)
         assertEquals(mockCurrentWeather, (result as Response.Success).data)

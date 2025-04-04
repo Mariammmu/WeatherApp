@@ -54,7 +54,7 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
         return localDataSource.deleteFavCity(city)
     }
 
-    override suspend fun getPlaceOnMap(searchText:String, placesClient: PlacesClient) :Flow<LatLng>{
-        return remoteDataSource.getPlaceOnMap(searchText,placesClient)
+    override suspend fun getLocationOnMap(searchText:String, placesClient: PlacesClient) :Flow<LatLng>{
+        return remoteDataSource.getLocationOnMap(searchText,placesClient)
        }
 }

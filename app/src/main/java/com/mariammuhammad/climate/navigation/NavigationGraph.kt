@@ -1,6 +1,7 @@
 package com.mariammuhammad.climate.navigation
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.mariammuhammad.climate.favorite.view.FavoriteScreen
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModelFactory
@@ -23,64 +25,96 @@ import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
 import com.mariammuhammad.climate.settings.view.SettingsScreen
+import com.mariammuhammad.climate.view.SplashScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NavigationGraph(navController: NavHostController) {
     val context = LocalContext.current
-
     fun navigateToMapScreen() {
-        navController.navigate(NavigationRoute.MapScreen::class.java.simpleName)
+        navController.navigate(NavigationRoute.MapScreen)
     }
-    fun navigateToHomeScreen() {
-        navController.navigate(NavigationRoute.HomeScreen::class.java.simpleName)
+
+    fun navigateToHomeScreen(favLat: Double, favLon: Double) {
+        navController.navigate(NavigationRoute.HomeScreen(favLat,favLon))
     }
+
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) },
 
-    ) { paddingValues ->
+        ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavigationRoute.HomeScreen::class.java.simpleName,
+            startDestination = NavigationRoute.SplashScreen,//NavigationRoute.HomeScreen(), //::class.java.simpleName,//"homeScreen/{favLat}/{favLon}",
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(NavigationRoute.HomeScreen::class.java.simpleName) {
+
+            composable<NavigationRoute.SplashScreen> {navBackStackEntry ->
+                SplashScreen(
+                    navigateToHome = {
+                        navController.navigate(NavigationRoute.HomeScreen()){
+                            popUpTo<NavigationRoute.SplashScreen>{
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+            composable <NavigationRoute.HomeScreen>{ backStackEntry ->//("homeScreen/{favLat}/{favLon}") { backStackEntry ->
+//                val favLat = backStackEntry.arguments?.getString("favLat")?.toDouble() ?: 0.0
+//                val favLon = backStackEntry.arguments?.getString("favLon")?.toDouble() ?: 0.0
+                val data = backStackEntry.toRoute<NavigationRoute.HomeScreen>()
                 val viewModel: HomeViewModel = viewModel(
                     factory = WeatherFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
-                                WeatherDataBase.getInstance(context).getWeatherDao())
+                            WeatherLocalDataSource(
+                                WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao(),
+                                WeatherDataBase.getInstance(context).getAlarmDao()
+                            )
                         )
                     )
                 )
-                HomeScreen(viewModel)
+                HomeScreen(viewModel, favLat = data.favLat, favLon = data.favLon)
             }
 
-            composable(NavigationRoute.WeatherAlertScreen::class.java.simpleName) {
-                // Implement the WeatherAlertScreen UI
-            }
-
-            composable(NavigationRoute.FavoriteScreen::class.java.simpleName) {
+            composable<NavigationRoute.FavoriteScreen> {
                 val favoriteViewModel: FavoriteViewModel = viewModel(
                     factory = FavoriteViewModelFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
-                                WeatherDataBase.getInstance(context).getWeatherDao())
+                            WeatherLocalDataSource(
+                                WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao(),
+                                WeatherDataBase.getInstance(context).getAlarmDao()
+                            )
                         )
                     )
                 )
-                FavoriteScreen(favoriteViewModel,  onMapButtonClick = { navigateToMapScreen() } )
+                FavoriteScreen(
+                    favoriteViewModel,
+                    onMapButtonClick = { navigateToMapScreen() },
+
+                    onFavPlaceClick = { favLat, favLon ->
+                        Log.i("TAG", "NavigationGraph: ${favLat}/${favLon}")
+                       navigateToHomeScreen(favLat, favLon)
+                    }
+
+                )
             }
-            composable(NavigationRoute.MapScreen::class.java.simpleName) {
+            composable<NavigationRoute.MapScreen> {
                 val favoriteViewModel: FavoriteViewModel = viewModel(
                     factory = FavoriteViewModelFactory(
                         WeatherRepositoryImpl(
                             WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao(),
-                                WeatherDataBase.getInstance(context).getWeatherDao())
+                            WeatherLocalDataSource(
+                                WeatherDataBase.getInstance(context).getFavoritesDao(),
+                                WeatherDataBase.getInstance(context).getWeatherDao(),
+                                WeatherDataBase.getInstance(context).getAlarmDao()
+
+                            )
                         )
                     )
                 )
@@ -89,59 +123,13 @@ fun NavigationGraph(navController: NavHostController) {
             }
 
 
-            composable(NavigationRoute.SettingScreen::class.java.simpleName) {
+            composable<NavigationRoute.WeatherAlertScreen>() {
+                // Implement the WeatherAlertScreen UI
+            }
+
+            composable<NavigationRoute.SettingsScreen> {
                 SettingsScreen()
             }
         }
     }
 }
-/*
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Composable
-fun NavigationGraph(navController: NavHostController) {
-    val context = LocalContext.current
-
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = NavigationRoute.HomeScreen.toString(),
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable<NavigationRoute.HomeScreen>() {
-                val viewModel: HomeViewModel = viewModel(
-                    factory = WeatherFactory(
-                        WeatherRepositoryImpl(
-                            WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao())
-                        )
-                    )
-                )
-                HomeScreen(viewModel)
-            }
-
-            composable<NavigationRoute.WeatherAlertScreen>() {
-                // Implement the WeatherAlertScreen UI
-            }
-
-            composable<NavigationRoute.FavoriteScreen>() {
-                val favoriteViewModel: FavoriteViewModel = viewModel(
-                    factory = FavoriteViewModelFactory(
-                        WeatherRepositoryImpl(
-                            WeatherRemoteDataSource(weatherService),
-                            WeatherLocalDataSource(WeatherDataBase.getInstance(context).getFavoritesDao())
-                        )
-                    )
-                )
-                FavoriteScreen(favoriteViewModel)
-            }
-
-            composable<NavigationRoute.SettingScreen>() {
-                // Implement the SettingScreen UI
-            }
-        }
-    }
-}
-
- */

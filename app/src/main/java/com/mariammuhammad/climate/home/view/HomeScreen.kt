@@ -96,13 +96,13 @@ private var windSpeedUnit = ""
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) {
+fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double?=null) {
 
     var context = LocalContext.current
     val snackBarHostState = remember { SnackbarHostState() }
 //    val weatherPrefs = remember { Settings.WeatherSettings.getInstance(context) }
-    var favLat by rememberSaveable { mutableStateOf(0.0) }
-    var favLon by rememberSaveable { mutableStateOf(0.0) }
+//    var favLat by rememberSaveable { mutableStateOf(0.0) }
+//    var favLon by rememberSaveable { mutableStateOf(0.0) }
     var defaultLat by remember { mutableStateOf(0.0) }
     var defaultLon by remember { mutableStateOf(0.0) }
     val currentWeather by homeViewModel.currentWeather.collectAsState()
@@ -149,65 +149,53 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
     // Check if location permission is granted and location services are enabled
     LaunchedEffect(Unit) {  //non composable code inside a composable funstion
-        if (locationPermissionManager.isLocationPermissionGranted()) {
-            if (locationUpdate.isLocationEnabled()) {
-                locationUpdate.getLastLocation { location ->
-                    location?.let {
-                        homeViewModel.getCurrentWeather(
-                            it.latitude,
-                            it.longitude,
-                            units = unit,
-                            lang = lang
-                        )
-                        homeViewModel.get5DaysWeather(
-                            it.latitude,
-                            location.longitude,
-                            tempUnit = unit,
-                            lang = lang
-                        )
+        if((favLat!=null && favLon!=null)){
+            Log.i("TAG", "HomeScreen: if Fav  true")
+            homeViewModel.getCurrentWeather(favLat,
+                favLon,
+                units = unit,
+                lang= lang
+            )
+
+            homeViewModel.get5DaysWeather(favLat,
+                favLon,
+                tempUnit = unit,
+                lang=lang
+            )
+        }else{
+            Log.i("TAG", "HomeScreen: if Fav  false")
+            
+            if (locationPermissionManager.isLocationPermissionGranted()) {
+                if (locationUpdate.isLocationEnabled()) {
+                    locationUpdate.getLastLocation { location ->
+                        location?.let {
+                            homeViewModel.getCurrentWeather(
+                                it.latitude,
+                                it.longitude,
+                                units = unit,
+                                lang = lang
+                            )
+                            homeViewModel.get5DaysWeather(
+                                it.latitude,
+                                location.longitude,
+                                tempUnit = unit,
+                                lang = lang
+                            )
+                        }
                     }
+                } else {
+                    locationUpdate.promptEnableLocationSettings()
                 }
             } else {
-                locationUpdate.promptEnableLocationSettings()
+                launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
-        } else {
-            launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+
+
     }
 
-//    val tempUnit = when(weatherPrefs.getTempUnit()){
-//        "c" -> "metric"
-//        "k" -> "standard"
-//        "f" -> "imperial"
-//        else -> "metric"
-//    }
-//
-//    val language = when(weatherPrefs.getLanguage()){
-//        "en" -> "en"
-//        "ar" -> "ar"
-//        else -> "en"
-//    }
-//    if((favLat.toString().isNotEmpty() && favLon.toString().isNotEmpty())){
-//        homeViewModel.getCurrentWeather(favLat,
-//            favLon,
-//            tempUnit,
-//            language)
-//
-//        homeViewModel.get5DaysWeather(favLat,
-//            favLon,
-//            tempUnit,
-//            language)
-//    }else{
-//        homeViewModel.getCurrentWeather(defaultLat,
-//            defaultLon,
-//            tempUnit,
-//            language)
-//
-//        homeViewModel.get5DaysWeather(defaultLat,
-//            defaultLon,
-//            tempUnit,
-//        language)
-//    }
+
+
 
     when (currentWeather) { //child
         is Response.Failure -> {
