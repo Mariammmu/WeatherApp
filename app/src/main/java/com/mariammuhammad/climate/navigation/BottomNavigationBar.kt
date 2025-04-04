@@ -90,7 +90,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         NavigationBarItem(
             selected = false,
             onClick = {
-                navController.navigate(NavigationRoute.SettingScreen){
+                navController.navigate(NavigationRoute.SettingsScreen){
                     popUpTo<NavigationRoute.HomeScreen>{}
                 }
             },

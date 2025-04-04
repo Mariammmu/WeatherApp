@@ -6,4 +6,6 @@ import com.mariammuhammad.climate.navigation.NavigationRoute
 @Composable
 fun WeatherAlertScreen(){
 
+
+    
 }

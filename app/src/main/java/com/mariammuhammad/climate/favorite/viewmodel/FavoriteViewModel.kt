@@ -26,25 +26,9 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
     private val _searchPlaceCoordinates = MutableStateFlow<Response<LatLng>>(Response.Loading)
     val searchPlaceCoordinates: StateFlow<Response<LatLng>> = _searchPlaceCoordinates
 
-    private val _favCityCurrentWeather = MutableStateFlow<Response<CurrentWeather>>(Response.Loading)
-    val favCityCurrentWeather =_favCityCurrentWeather.asStateFlow()
-
     private val _fiveDayFavCityWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
     val fiveDayFavoriteCity = _fiveDayFavCityWeather.asStateFlow()
 
-
-    fun getRemoteFavCityCurrentWeather(lat: Double, lon: Double, units: String, lang: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.getWeatherForecast(lat, lon, units, lang)
-                    .collect { response ->
-                        _favCityCurrentWeather.value = Response.Success(response)
-                    }
-            } catch (e: Exception) {
-                _favCityCurrentWeather.value = Response.Failure(e)
-            }
-        }
-    }
 
     fun getRemote5Days3HoursWeather(lat: Double, lon: Double, units: String, lang: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -61,11 +45,14 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
 
     fun addFavoriteCity(city: City) {
         viewModelScope.launch {
+            _favoriteCities.value = Response.Loading
             try {
                 repository.addFavCity(city)
 
+                // Get the current list of cities and append the new one
                 val currentCities = (_favoriteCities.value as? Response.Success)?.data ?: emptyList()
                 _favoriteCities.value = Response.Success(currentCities + city)
+
             } catch (e: Exception) {
                 _favoriteCities.value = Response.Failure(e)
             }
@@ -102,7 +89,6 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
         }
     }
 
- //  /*
    fun getLocationOnMap(searchText: String, placesClient: PlacesClient) {
         viewModelScope.launch {
             try {
@@ -118,7 +104,6 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
             }
         }
     }
-   // */
 }
 
 class FavoriteViewModelFactory(

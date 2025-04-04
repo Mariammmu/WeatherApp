@@ -95,9 +95,6 @@ import com.mariammuhammad.climate.utiles.Response
 
         val context = LocalContext.current.applicationContext
 
-        val scope = rememberCoroutineScope()
-
-
         if (!Places.isInitialized()) {
             Places.initialize(context, "AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y")
         }
@@ -109,85 +106,70 @@ import com.mariammuhammad.climate.utiles.Response
         Box(modifier = Modifier.fillMaxSize()) {
             LocationPickerMap(
                 selectedLocation = selectedLatLng,
-                onLocationSelected = { latLng ->
-                    selectedLatLng = latLng
-                }
+                onLocationSelected = { latLng -> selectedLatLng = latLng }
             )
-
 
             TextField(
                 value = searchText,
                 onValueChange = { searchText = it },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
-
                     if (searchPlaceCoordinates is Response.Success) {
                         selectedLatLng = searchPlaceCoordinates.data
                     }
-
                 }),
-                modifier = Modifier
-                    .fillMaxWidth()
-//                    .padding(top = 50.dp)
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 label = { Text("Search for a place...") },
                 singleLine = true
             )
 
             selectedLatLng?.let { latLng ->
-
                 Card(
                     modifier = Modifier
                         .height(250.dp)
                         .fillMaxWidth()
                         .padding(16.dp)
                         .padding(bottom = 100.dp)
-                     .align(Alignment.BottomCenter),
-                   colors = CardDefaults.cardColors(containerColor = Color(0xFF825F9D)),
+                        .align(Alignment.BottomCenter),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF825F9D))
  //                   colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
 
                 ) {
-
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    )
-                    {
-
-                        //check
-                        Button(
-                            onClick = {
-                                favViewModel.getRemote5Days3HoursWeather(
-                                    latLng.latitude,
-                                    latLng.longitude,
-                                    "metric",
-                                    "en"
-                                )
-                                if (next5Days is Response.Success) {
-
-                                    next5Days.data.city?.let {
-                                        favViewModel.addFavoriteCity(next5Days.data.city)
-
+                    ) {
+//                        if (next5Days is Response.Loading) {
+//                            CircularProgressIndicator()
+//                        } else {
+                            Button(
+                                onClick = {
+                                    favViewModel.getRemote5Days3HoursWeather(
+                                        latLng.latitude,
+                                        latLng.longitude,
+                                        "metric",
+                                        "en"
+                                    )
+                                    if (next5Days is Response.Success) {
+                                        next5Days.data.city?.let {
+                                            favViewModel.addFavoriteCity(next5Days.data.city)
+                                        }
                                     }
-
-
                                 }
+                            ) {
+                                Icon(Icons.Outlined.Favorite, contentDescription = "Add to favorite")
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    stringResource(R.string.save_location),
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
-                        ) {
-
-                            Icon(Icons.Outlined.Favorite, contentDescription = "Add to favorite")
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                stringResource(R.string.save_location),
-                                fontWeight = FontWeight.Bold
-                            )
-
                         }
                     }
                 }
             }
         }
-    }
+    //}
 
     @Composable
     fun LocationPickerMap(
@@ -222,7 +204,7 @@ import com.mariammuhammad.climate.utiles.Response
             selectedLocation?.let { location ->
                 Marker(
                     state = MarkerState(position = location),
-                   // title = "Weather Location"
+                   // title = "${city.name}"
                 )
             }
         }

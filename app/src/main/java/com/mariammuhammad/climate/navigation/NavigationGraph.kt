@@ -128,7 +128,7 @@ fun NavigationGraph(navController: NavHostController) {
             }
 
             composable<NavigationRoute.SettingsScreen> {
-                SettingsScreen()
+                SettingsScreen(viewModel = viewModel ())
             }
         }
     }
