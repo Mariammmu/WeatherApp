@@ -1,9 +1,9 @@
 package com.mariammuhammad.climate.model.local
 
-import android.content.Context
-import com.mariammuhammad.climate.model.pojo.Alarm
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.model.data.Alarm
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import kotlinx.coroutines.flow.Flow
 
 class WeatherLocalDataSource (
@@ -27,8 +27,16 @@ class WeatherLocalDataSource (
         return weatherDao.getStoredWeather()
     }
 
-     override suspend fun addCurrentWeather(weatherResponse: NextDaysWeather) {
-        weatherDao.insertAllCurrentWeather(weatherResponse)
+     override suspend fun addNextDaysWeather(weatherResponse: NextDaysWeather) {
+        weatherDao.insertNextDaysWeather(weatherResponse)
+    }
+
+    override fun getCurrentWeather(): Flow<CurrentWeather> {
+        return weatherDao.getCurrentWeather()
+    }
+
+    override suspend fun addCurrentWeather(currentWeather: CurrentWeather) {
+        weatherDao.insertCurrentWeather(currentWeather)
     }
 
     override fun getAllAlarms():Flow<List<Alarm>>{
@@ -43,9 +51,9 @@ class WeatherLocalDataSource (
         return alarmDao.deleteAlarm(alarm)
     }
 
-    override suspend fun deleteAlarmById(alarmId:Int){
-        return alarmDao.deleteAlarmById(alarmId)
-    }
+//    override suspend fun deleteAlarmById(alarmId:Int){
+//        return alarmDao.deleteAlarmById(alarmId)
+//    }
 
 }
 

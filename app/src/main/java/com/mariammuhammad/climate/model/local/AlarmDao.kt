@@ -5,7 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.mariammuhammad.climate.model.pojo.Alarm
+import com.mariammuhammad.climate.model.data.Alarm
 import kotlinx.coroutines.flow.Flow
 
 @Dao

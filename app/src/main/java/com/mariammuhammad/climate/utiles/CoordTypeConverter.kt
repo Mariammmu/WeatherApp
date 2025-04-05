@@ -1,7 +1,7 @@
 package com.mariammuhammad.climate.utiles
 
 import androidx.room.TypeConverter
-import com.mariammuhammad.climate.model.pojo.Coord
+import com.mariammuhammad.climate.model.data.Coord
 
 class CoordTypeConverter {
 

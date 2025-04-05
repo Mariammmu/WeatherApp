@@ -2,11 +2,10 @@ package com.mariammuhammad.climate.model
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.mariammuhammad.climate.model.pojo.Alarm
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
-import com.mariammuhammad.climate.utiles.Response
+import com.mariammuhammad.climate.model.data.Alarm
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import kotlinx.coroutines.flow.Flow
 
 interface WeatherRepository {
@@ -34,9 +33,13 @@ interface WeatherRepository {
     suspend fun getLocationOnMap(searchText:String,placesClient: PlacesClient) :Flow<LatLng>
 
 
-    fun getAllCurrentWeatherFromRoom(): Flow<NextDaysWeather>
+    fun getNextDaysWeatherFromRoom(): Flow<NextDaysWeather>
 
-    suspend fun insertCurrentWeather(weatherResponse: NextDaysWeather)
+    suspend fun insertNextDaysWeather(weatherResponse: NextDaysWeather)
+
+    fun getAllCurrentWeatherFromRoom(): Flow<CurrentWeather>
+
+    suspend fun insertCurrentWeather(currentWeather: CurrentWeather)
 
 
 
@@ -46,5 +49,5 @@ interface WeatherRepository {
 
     suspend fun deleteAlarm(alarm: Alarm):Int
 
-    suspend fun deleteAlarmById(alarmId:Int)
+//    suspend fun deleteAlarmById(alarmId:Int)
     }

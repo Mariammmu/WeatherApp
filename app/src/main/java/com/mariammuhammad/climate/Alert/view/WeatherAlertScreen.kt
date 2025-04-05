@@ -1,7 +1,9 @@
 package com.mariammuhammad.climate.Alert.view
 
+import android.Manifest
 import android.app.TimePickerDialog
-import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -29,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,10 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -56,11 +53,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role.Companion.Button
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.work.Constraints
 import androidx.work.Data
@@ -69,28 +65,31 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.mariammuhammad.climate.Alert.viewmodel.AlertViewModel
 import com.mariammuhammad.climate.Alert.worker.MyWorkManager
+import com.mariammuhammad.climate.Alert.worker.NotificationHandler
 import com.mariammuhammad.climate.R
-import com.mariammuhammad.climate.model.pojo.Alarm
-import com.mariammuhammad.climate.navigation.NavigationRoute
+import com.mariammuhammad.climate.model.data.Alarm
+import com.mariammuhammad.climate.model.data.AlarmCreationState
 import com.mariammuhammad.climate.utiles.Constants
+import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.math.pow
-import kotlin.math.roundToInt
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun WeatherAlarmScreen(
-    alertViewModel: AlertViewModel
+    alertViewModel: AlertViewModel,
 ) {
     val alarmsState = alertViewModel.alarms.collectAsState()
     var showAddAlarmDialog by remember { mutableStateOf(false) }
     val alarmState = rememberAlarmCreationState()
 
-    val context= LocalContext.current
+    val context = LocalContext.current
+
+
+
 
     LaunchedEffect(Unit) {
         alertViewModel.getAlarms()
@@ -103,23 +102,44 @@ fun WeatherAlarmScreen(
         onAddAlarmClick = { showAddAlarmDialog = true },
         onDismissDialog = { showAddAlarmDialog = false },
         onSaveAlarm = { alarm ->
-            val delay: Long = alarm.hour / 1000L - System.currentTimeMillis() / 1000L
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .setRequiresCharging(false)
-                .build()
 
-            val data = Data.Builder()
-                .putDouble(Constants.LATITUDE, alarm.lat)
-                .putDouble(Constants.LONGITUDE, alarm.lon)
-                .build()
-            alertViewModel.addAlarm(alarm)
-            val request = OneTimeWorkRequestBuilder<MyWorkManager>()
-                .setInitialDelay(delay, TimeUnit.SECONDS)
-                .setInputData(data)
-                .setConstraints(constraints)
-                .build()
-            WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
+            val locationUpdate = LocationUpdate(context)
+
+            locationUpdate.getLastLocation { location ->
+
+                val delay: Long = alarm.hour / 1000L - System.currentTimeMillis() / 1000L
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .setRequiresCharging(false)
+                    .build()
+
+
+                val data = Data.Builder()
+                    .putDouble(Constants.LATITUDE, location?.latitude ?: 0.0)
+                    .putDouble(Constants.LONGITUDE, location?.longitude ?: 0.0)
+                    .build()
+
+                val finalAlarm = alarm.copy(
+                    cityName = locationUpdate.getAddress(
+                        context,
+                        location?.latitude?:0.0,
+                        location?.longitude?:0.0
+                    )?: ""
+                )
+
+                alertViewModel.addAlarm(finalAlarm)
+
+                val request = OneTimeWorkRequestBuilder<MyWorkManager>()
+                    .setInitialDelay(delay, TimeUnit.SECONDS)
+                    .setInputData(data)
+                    .setConstraints(constraints)
+                    .build()
+                WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
+                showAddAlarmDialog = false
+
+            }
+
+
         },
 
         onDeleteAlarm = alertViewModel::deleteAlarm
@@ -133,7 +153,7 @@ private fun rememberAlarmCreationState() = remember {
             startDate = null,
             startTime = null,
             endTime = null,
-            notificationType = NotificationType.ALARM
+            //notificationType = NotificationType.ALARM
         )
     )
 }
@@ -148,9 +168,31 @@ private fun WeatherAlarmScaffold(
     onSaveAlarm: (Alarm) -> Unit,
     onDeleteAlarm: (Alarm) -> Unit
 ) {
+    val context= LocalContext.current
+    val notificationHandler= NotificationHandler(context)
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddAlarmClick) {
+            FloatingActionButton(onClick = {
+                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU){
+                    if(context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        ==PackageManager.PERMISSION_GRANTED){
+                        onAddAlarmClick()
+
+                    }
+
+                    else{
+
+                        notificationHandler.showNotificationPermissionDialog()
+                    }
+                }
+                else{
+                    onAddAlarmClick()
+
+                }
+
+
+            }
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Alarm")
             }
         }
@@ -178,22 +220,21 @@ private fun WeatherAlarmContent(
     onDeleteAlarm: (Alarm) -> Unit
 ) {
     when (val state = alarmsState.value) {
-        is Response.Loading -> CircularProgressIndicator(modifier)
+        is Response.Loading -> CircularProgressIndicator()
         is Response.Success -> {
             if (state.data.isEmpty()) {
-                EmptyAlarmsView(modifier)
+                EmptyAlarmsView()
             } else {
                 AlarmListView(
                     alarms = state.data,
                     onDelete = onDeleteAlarm,
-                    modifier = modifier
                 )
             }
         }
+
         is Response.Failure -> {
             ErrorMessage(
                 message = "Error loading alarms: ${state.error.localizedMessage}",
-                modifier = modifier
             )
         }
     }
@@ -209,11 +250,14 @@ private fun AddAlarmDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create Weather Alert",
-            color = colorResource(R.color.background),
-            fontFamily = FontFamily(Font(R.font.alfa_slab))
+        title = {
+            Text(
+                "Create Weather Alert",
+                color = colorResource(R.color.background),
+                fontFamily = FontFamily(Font(R.font.alfa_slab))
 
-        ) },
+            )
+        },
         text = {
             AlarmCreationForm(
                 state = currentState.value,
@@ -236,7 +280,7 @@ private fun AddAlarmDialog(
                 Text("CANCEL")
             }
         },
-        containerColor = colorResource(R.color.light_purple),
+        containerColor = colorResource(R.color.off_white),
         textContentColor = colorResource(R.color.background)
 
     )
@@ -247,7 +291,7 @@ private fun AlarmCreationForm(
     state: AlarmCreationState,
     onStateChange: (AlarmCreationState) -> Unit
 ) {
-    Column  {
+    Column {
         Text("Pick a date", fontFamily = FontFamily(Font(R.font.alfa_slab)))
 
         DatePickerRow(
@@ -273,13 +317,13 @@ private fun AlarmCreationForm(
             onTimeSelected = { onStateChange(state.copy(endTime = it)) }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Notify me by", fontFamily = FontFamily(Font(R.font.alfa_slab)))
-        NotificationTypeSelector(
-            selectedType = state.notificationType,
-            onTypeSelected = { onStateChange(state.copy(notificationType = it)) }
-        )
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Text("Notify me by", fontFamily = FontFamily(Font(R.font.alfa_slab)))
+//        NotificationTypeSelector(
+//            selectedType = state.notificationType,
+//            onTypeSelected = { onStateChange(state.copy(notificationType = it)) }
+//        )
     }
 }
 
@@ -305,7 +349,7 @@ fun DatePickerRow(
             painter = painterResource(R.drawable.google_calendar_icon), // Make sure you have this icon
             contentDescription = label,
             modifier = Modifier.padding(end = 8.dp),
-            tint= Color.Unspecified
+            tint = Color.Unspecified
         )
         Text(
             text = "$label ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: "Select a date"}",
@@ -360,14 +404,12 @@ fun TimePickerRow(
     var showTimePicker by remember { mutableStateOf(false) }
     val currentTime = Calendar.getInstance()
 
-    // Format to show time
     val formattedTime = selectedTime?.let {
         val hour = it.first
         val minute = it.second
         val amPm = if (it.third) "PM" else "AM"
         "${hour.toString().padStart(2, '0')} : ${minute.toString().padStart(2, '0')} $amPm"
     }
-//    val timeInMillie= formattedTime(System.currentTimeMillis()/1000).toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -377,18 +419,15 @@ fun TimePickerRow(
             .padding(vertical = 8.dp)
     ) {
         Icon(
-            painter = painterResource(R.drawable.pending_clock_icon), // Ensure this icon exists
+            painter = painterResource(R.drawable.pending_clock_icon),
             contentDescription = label,
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = "$label: ${formattedTime?:"Select Time"}",
+            text = "$label: ${formattedTime ?: "Select Time"}",
             modifier = Modifier.weight(1f),
             color = colorResource(R.color.background),
             fontFamily = FontFamily(Font(R.font.alfa_slab))
-
-
-
         )
     }
 
@@ -396,58 +435,68 @@ fun TimePickerRow(
         val hour = selectedTime?.first ?: currentTime.get(Calendar.HOUR_OF_DAY)
         val minute = selectedTime?.second ?: currentTime.get(Calendar.MINUTE)
 
-        // Open the TimePickerDialog
-        TimePickerDialog(
+        val timePickerDialog = TimePickerDialog(
             LocalContext.current,
             { _, selectedHour, selectedMinute ->
-                // Handle AM/PM (based on 12-hour format)
+                // handle AM/PM (based on 12-hour format)
                 val isPM = selectedHour >= 12
                 val hour12 = when {
                     selectedHour == 0 -> 12  // Handle midnight
                     selectedHour > 12 -> selectedHour - 12  // Convert to 12-hour format
                     else -> selectedHour
                 }
-                // Call onTimeSelected with the selected hour, minute, and AM/PM flag
+
                 onTimeSelected(Triple(hour12, selectedMinute, isPM))
                 showTimePicker = false  // Dismiss the time picker
             },
             hour,
             minute,
             false // Set to false for 12-hour format
-        ).show()
-    }
-}
+        )
 
-@Composable
-private fun NotificationTypeSelector(
-    selectedType: NotificationType,
-    onTypeSelected: (NotificationType) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        NotificationType.values().forEach { type ->
-            FilterChip(
-                selected = selectedType == type,
-                onClick = { onTypeSelected(type) },
-                label = { Text(type.name) }
-            )
+        // Set dismiss listener to handle when user clicks outside the dialog or presses back
+        timePickerDialog.setOnDismissListener {
+            showTimePicker = false
         }
+
+        timePickerDialog.setOnCancelListener {
+            showTimePicker = false
+        }
+
+        timePickerDialog.show()
     }
 }
 
+//@Composable
+//private fun NotificationTypeSelector(
+//    selectedType: NotificationType,
+//    onTypeSelected: (NotificationType) -> Unit
+//) {
+//    Row(
+//        modifier = Modifier.fillMaxWidth(),
+//        horizontalArrangement = Arrangement.SpaceEvenly
+//    ) {
+//        NotificationType.values().forEach { type ->
+//            FilterChip(
+//                selected = selectedType == type,
+//                onClick = { onTypeSelected(type) },
+//                label = { Text(type.name) }
+//            )
+//        }
+//    }
+//}
+
 @Composable
-private fun EmptyAlarmsView(modifier: Modifier = Modifier) {
+private fun EmptyAlarmsView() {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(colorResource(R.color.background)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "You haven't any alarms",
+            text = stringResource(R.string.empty_alarms),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 16.dp),
             color = colorResource(R.color.off_white),
@@ -460,14 +509,21 @@ private fun EmptyAlarmsView(modifier: Modifier = Modifier) {
 private fun AlarmListView(
     alarms: List<Alarm>,
     onDelete: (Alarm) -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier) {
-        items(alarms) { alarm ->
-            AlarmItem(
-                alarm = alarm,
-                onDelete = { onDelete(alarm) }
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorResource(R.color.background)),
+        //verticalArrangement = Arrangement.Center,
+        //horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LazyColumn { //modifier = Modifier.background(colorResource(R.color.background))) {
+            items(alarms) { alarm ->
+                AlarmItem(
+                    alarm = alarm,
+                    onDelete = { onDelete(alarm) }
+                )
+            }
         }
     }
 }
@@ -481,7 +537,9 @@ private fun AlarmItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        // elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
+
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -503,63 +561,39 @@ private fun AlarmItem(
                 text = alarm.cityName,
                 style = MaterialTheme.typography.bodyLarge
             )
-
-            Text(
-//                text = "Location: (${alarm.lat.roundToDecimals(2)}, ${alarm.lon.roundToDecimals(2)})",
-                text = "Location: (${alarm.lat}, ${alarm.lon})",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp))
+//            Text(
+//                text = "Location: ",    //(${alarm.lat}, ${alarm.lon})",
+//                style = MaterialTheme.typography.bodyMedium,
+//                modifier = Modifier.padding(top = 4.dp)
+//            )
         }
     }
 }
 
-//private fun Double.roundToDecimals(decimalCount: Int): Double {
-//    val factor = 10.0.pow(decimalCount)
-//    return (this * factor).roundToInt() / factor
-//}
+
 @Composable
-private fun ErrorMessage(
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+private fun ErrorMessage(message: String) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(48.dp)
+                Icons.Default.Warning, contentDescription = "Error",
+                tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = message,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
+                text = message, color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center
             )
         }
     }
 }
-
-data class AlarmCreationState(
-    val startDate: Long?,
-    val startTime: Triple<Int, Int, Boolean>?,
-    val endTime: Triple<Int, Int, Boolean>?,
-    val notificationType: NotificationType
-)
 
 private fun createAlarmFromState(state: AlarmCreationState): Alarm {
     return Alarm(
         id = 0,
         cityName = "Selected Location",
-        lat = 0.0,
-        lon = 0.0,
+//        lat = ,
+//        lon = 0.0,
         hour = state.startTime?.first ?: 0,
         minute = state.startTime?.second ?: 0
     )
@@ -571,6 +605,6 @@ private fun isAlarmStateValid(state: AlarmCreationState): Boolean {
             state.endTime != null
 }
 
-enum class NotificationType {
-    ALARM, NOTIFICATION
-}
+//enum class NotificationType {
+//    ALARM, NOTIFICATION
+//}

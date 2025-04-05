@@ -23,4 +23,5 @@
     <string name="next_5_days">Next Days</string>
     <string name="save_location">Add to Favorites</string>
     <string name="language">Language</string>
+    <string name="empty_alarms">You don\'t have any alarms</string>
 </resources>

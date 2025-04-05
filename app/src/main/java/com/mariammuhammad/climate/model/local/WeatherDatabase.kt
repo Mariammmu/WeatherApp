@@ -5,16 +5,25 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.mariammuhammad.climate.model.pojo.Alarm
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.model.data.Alarm
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import com.mariammuhammad.climate.utiles.CityConverter
+import com.mariammuhammad.climate.utiles.CloudsConverter
 import com.mariammuhammad.climate.utiles.Converters
 import com.mariammuhammad.climate.utiles.CoordTypeConverter
+import com.mariammuhammad.climate.utiles.MainConverter
+import com.mariammuhammad.climate.utiles.SysConverter
+import com.mariammuhammad.climate.utiles.WeatherConverter
+import com.mariammuhammad.climate.utiles.WindConverter
 
-@Database(entities = [City::class, NextDaysWeather::class,Alarm::class], version = 2)
-//@TypeConverters(Converters::class)
-@TypeConverters(Converters::class, CityConverter::class,CoordTypeConverter::class)
+@Database(entities = [City::class, CurrentWeather::class, NextDaysWeather::class,Alarm::class],
+    version = 2)
+@TypeConverters(Converters::class, CityConverter::class,CoordTypeConverter::class,
+    WindConverter::class, CloudsConverter::class, MainConverter::class, SysConverter::class,
+    WeatherConverter::class,
+    )
 
     abstract class WeatherDataBase: RoomDatabase() {
 

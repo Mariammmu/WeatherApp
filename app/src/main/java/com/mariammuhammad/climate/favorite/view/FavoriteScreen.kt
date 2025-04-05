@@ -27,10 +27,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,9 +39,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
-import com.mariammuhammad.climate.model.pojo.City
+import com.mariammuhammad.climate.model.data.City
 import com.mariammuhammad.climate.utiles.Response
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.getCountryName
+import com.mariammuhammad.climate.utiles.HelperFunctions.getCountryName
 
 
 @Composable

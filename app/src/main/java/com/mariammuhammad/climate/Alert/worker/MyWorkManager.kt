@@ -1,6 +1,7 @@
 package com.mariammuhammad.climate.Alert.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.mariammuhammad.climate.model.WeatherRepositoryImpl
@@ -42,8 +43,9 @@ class MyWorkManager(
             defaultValue = 0.0
         )
 
-        val weatherDetails= repo.getWeatherForecast(
-            lat,
+
+        Log.i("TAG", "doWork: ${lat}/${lon}")
+        val weatherDetails= repo.getWeatherForecast(lat,
             lon,
             units = Constants.UNITS_CELSIUS,
             lan = Constants.LANGUAGE_EN,

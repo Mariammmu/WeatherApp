@@ -1,6 +1,5 @@
 package com.mariammuhammad.climate.model.remote
 
-import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
@@ -8,10 +7,8 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient
 //import com.google.android.libraries.places.api.net.PlacesClient
 
-import com.google.gson.Gson
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
-import com.mariammuhammad.climate.utiles.Response
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

@@ -7,9 +7,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
 //import com.google.android.libraries.places.api.net.PlacesClient
 import com.mariammuhammad.climate.model.WeatherRepository
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

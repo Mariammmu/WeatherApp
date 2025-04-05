@@ -25,7 +25,6 @@ import com.mariammuhammad.climate.map.view.MapScreen
 import com.mariammuhammad.climate.model.WeatherRepositoryImpl
 import com.mariammuhammad.climate.model.local.WeatherDataBase
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
-import com.mariammuhammad.climate.model.pojo.Alarm
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
 import com.mariammuhammad.climate.settings.view.SettingsScreen
@@ -129,6 +128,7 @@ fun NavigationGraph(navController: NavHostController) {
 
             composable<NavigationRoute.WeatherAlertScreen>() {
 
+
                 val alertViewModel: AlertViewModel = viewModel(
                     factory = AlertViewModelFactory(
                         WeatherRepositoryImpl(
@@ -143,8 +143,8 @@ fun NavigationGraph(navController: NavHostController) {
                 )
                 WeatherAlarmScreen(
                     alertViewModel,
-                    //onNavigateToAlarmDetail=
-                    )
+
+                )
             }
 
             composable<NavigationRoute.SettingsScreen> {

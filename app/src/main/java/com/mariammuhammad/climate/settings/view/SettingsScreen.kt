@@ -50,7 +50,7 @@ import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.settings.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreen( ) {
+fun SettingsScreen() {
     // val state by viewModel.state.collectAsState()
 
     Column(
@@ -60,7 +60,6 @@ fun SettingsScreen( ) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Language Card
         SettingsCard(
             title = stringResource(R.string.language),
             icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
@@ -76,41 +75,28 @@ fun SettingsScreen( ) {
             icon = painterResource(id = R.drawable.speedometer_color_icon),
             options = listOf("Celsius °C", "Kelvin °K", "Fahrenheit °F"),
             selectedOption = "Celsius °C",//state.tempUnit,
-           // onOptionSelected = { viewModel.setTempUnit(it) }
+            // onOptionSelected = { viewModel.setTempUnit(it) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Location Card
         SettingsCard(
             title = "Location",
             icon = painterResource(id = R.drawable.google_map_icon),
             options = listOf("Gps", "Map"),
             selectedOption = "Gps",//state.locationMethod,
-           // onOptionSelected = { viewModel.setLocationMethod(it) }
+            // onOptionSelected = { viewModel.setLocationMethod(it) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Wind Speed Unit Card
         SettingsCard(
             title = "Wind Speed Unit",
             icon = painterResource(id = R.drawable.cloud_wind_color_icon),
             options = listOf("meter/sec", "mile/hour"),
             selectedOption = "meter/sec",//state.windSpeedUnit,
-           // onOptionSelected = { viewModel.setWindSpeedUnit(it) }
+            // onOptionSelected = { viewModel.setWindSpeedUnit(it) }
         )
-
-//        if (!state.isInternetConnected) {
-//            Spacer(modifier = Modifier.height(16.dp))
-//            Text(
-//                text = "no internet connection",
-//                color = Color.Red,
-//                modifier = Modifier.fillMaxWidth(),
-//                textAlign = TextAlign.Center,
-//                style = MaterialTheme.typography.bodyMedium
-//            )
-//        }
     }
 }
 
@@ -120,7 +106,7 @@ private fun SettingsCard(
     icon: Painter,
     options: List<String>,
     selectedOption: String,
-   // onOptionSelected: (String) -> Unit
+    // onOptionSelected: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -136,9 +122,11 @@ private fun SettingsCard(
                 Icon(
                     painter = icon,
                     contentDescription = null,
-                    tint = colorResource(R.color.dark_purple),
-                    modifier = Modifier.size(24.dp)
-                )
+                    tint = Color.Unspecified,
+                    //tint = colorResource(R.color.dark_purple),
+                    modifier = Modifier.size(24.dp),
+
+                    )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = title,
@@ -157,7 +145,7 @@ private fun SettingsCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                          //  .clickable { onOptionSelected(option) }
+                        //  .clickable { onOptionSelected(option) }
                     ) {
                         RadioButton(
                             selected = option == selectedOption,

@@ -3,11 +3,13 @@ package com.mariammuhammad.climate.utiles
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.Coord
-import com.mariammuhammad.climate.model.pojo.ListDaysDetails
-import com.mariammuhammad.climate.model.pojo.Main
-import com.mariammuhammad.climate.model.pojo.Weather
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.Clouds
+import com.mariammuhammad.climate.model.data.ListDaysDetails
+import com.mariammuhammad.climate.model.data.Main
+import com.mariammuhammad.climate.model.data.Sys
+import com.mariammuhammad.climate.model.data.Weather
+import com.mariammuhammad.climate.model.data.Wind
 
 class Converters {
 
@@ -37,38 +39,77 @@ class CityConverter {
         return Gson().toJson(city)
     }
 }
-//    @TypeConverter
-//    fun fromWeatherList(weatherList: List<Weather>): String {
-//        return Gson().toJson(weatherList)
-//    }
-//
-//    @TypeConverter
-//    fun toWeatherList(weatherListString: String): List<Weather> {
-//        val listType = object : TypeToken<List<Weather>>() {}.type
-//        return Gson().fromJson(weatherListString, listType)
-//    }
-//
-//    @TypeConverter
-//    fun fromMain(main: Main): String {
-//        return Gson().toJson(main)
-//    }
-//
-//    @TypeConverter
-//    fun toMain(mainString: String): Main {
-//        return Gson().fromJson(mainString, Main::class.java)
-//    }
-//
-//
-//    @TypeConverter
-//    fun fromString(value: String): Coord {
-//        val parts = value.split(",")
-//        return Coord(
-//            lon = parts[0].toDouble(),
-//            lat = parts[1].toDouble()
-//        )
-//    }
-//
-//    @TypeConverter
-//    fun toString(coordinates: Coord): String {
-//        return "${coordinates.lon},${coordinates.lat}"
-//    }
+
+class CloudsConverter {
+
+    @TypeConverter
+    fun fromClouds(clouds: Clouds): String {
+        return Gson().toJson(clouds)
+    }
+
+    @TypeConverter
+    fun toClouds(json: String): Clouds {
+        return Gson().fromJson(json, Clouds::class.java)
+    }
+}
+
+class MainConverter {
+
+    @TypeConverter
+    fun fromMain(main: Main): String {
+        return Gson().toJson(main)
+    }
+
+    @TypeConverter
+    fun toMain(json: String): Main {
+        return Gson().fromJson(json, Main::class.java)
+    }
+}
+
+class SysConverter {
+
+    @TypeConverter
+    fun fromSys(sys: Sys): String {
+        return Gson().toJson(sys)
+    }
+
+    @TypeConverter
+    fun toSys(json: String): Sys {
+        return Gson().fromJson(json, Sys::class.java)
+    }
+}
+
+class WeatherConverter {
+
+    @TypeConverter
+    fun fromWeather(weatherList: List<Weather>): String {
+        return Gson().toJson(weatherList)
+    }
+
+    @TypeConverter
+    fun toWeather(json: String): List<Weather> {
+        val type = object : TypeToken<List<Weather>>() {}.type
+        return Gson().fromJson(json, type)
+    }
+}
+
+class WindConverter {
+
+    @TypeConverter
+    fun fromWind(wind: Wind): String {
+        return Gson().toJson(wind)
+    }
+
+    @TypeConverter
+    fun toWind(json: String): Wind {
+        return Gson().fromJson(json, Wind::class.java)
+    }
+}
+
+
+
+
+
+
+
+

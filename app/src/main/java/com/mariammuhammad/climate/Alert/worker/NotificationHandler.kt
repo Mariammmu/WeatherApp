@@ -80,10 +80,11 @@ class NotificationHandler (private val context: Context){
         } else {
             Log.w("NotificationHelper", "POST_NOTIFICATIONS permission not granted.")
             // Optionally trigger a permission request or handle accordingly
+            showNotificationPermissionDialog()
         }
     }
 
-    private fun showNotificationPermissionDialog() {
+     fun showNotificationPermissionDialog() {
         val builder = AlertDialog.Builder(context)
             .setTitle("Enable Notifications")
             .setMessage("To receive weather alerts, please enable notifications.")
@@ -101,7 +102,6 @@ class NotificationHandler (private val context: Context){
         dialog.show()
     }
 
-    // Open notification settings page
     private fun openNotificationSettings() {
         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
             .apply {

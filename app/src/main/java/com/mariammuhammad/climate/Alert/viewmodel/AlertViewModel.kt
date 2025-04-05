@@ -3,15 +3,12 @@ package com.mariammuhammad.climate.Alert.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.WeatherRepository
-import com.mariammuhammad.climate.model.pojo.Alarm
+import com.mariammuhammad.climate.model.data.Alarm
 import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class AlertViewModel(private val repository: WeatherRepository) : ViewModel() {
@@ -62,17 +59,17 @@ class AlertViewModel(private val repository: WeatherRepository) : ViewModel() {
         }
     }
 
-    fun deleteAlarmById(alarmId: Int) {
-        viewModelScope.launch {
-            try {
-                repository.deleteAlarmById(alarmId)
-                val currentAlarms = (_alarms.value as? Response.Success)?.data ?: emptyList()
-                _alarms.value = Response.Success(currentAlarms.filterNot { it.id == alarmId })
-            } catch (e: Exception) {
-                _alarms.value = Response.Failure(e)
-            }
-        }
-    }
+//    fun deleteAlarmById(alarmId: Int) {
+//        viewModelScope.launch {
+//            try {
+//                repository.deleteAlarmById(alarmId)
+//                val currentAlarms = (_alarms.value as? Response.Success)?.data ?: emptyList()
+//                _alarms.value = Response.Success(currentAlarms.filterNot { it.id == alarmId })
+//            } catch (e: Exception) {
+//                _alarms.value = Response.Failure(e)
+//            }
+//        }
+//    }
 }
 
 class AlertViewModelFactory(

@@ -3,12 +3,11 @@ package com.mariammuhammad.climate.model
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
-import com.mariammuhammad.climate.model.pojo.Alarm
-import com.mariammuhammad.climate.model.pojo.City
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.model.data.Alarm
+import com.mariammuhammad.climate.model.data.City
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
-import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.flow.Flow
 
 class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSource,
@@ -31,12 +30,20 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
         return remoteDataSource.get5DaysEvery3Hours(lat, lon, units, lan)
     }
 
-    override fun getAllCurrentWeatherFromRoom(): Flow<NextDaysWeather> {
+    override fun getNextDaysWeatherFromRoom(): Flow<NextDaysWeather> {
         return localDataSource.getAllStoredWeather()
     }
 
-    override suspend fun insertCurrentWeather(weatherResponse: NextDaysWeather) {
-        localDataSource.addCurrentWeather(weatherResponse)
+    override suspend fun insertNextDaysWeather(weatherResponse: NextDaysWeather) {
+        localDataSource.addNextDaysWeather(weatherResponse)
+    }
+
+    override fun getAllCurrentWeatherFromRoom(): Flow<CurrentWeather> {
+        return localDataSource.getCurrentWeather()
+    }
+
+    override suspend fun insertCurrentWeather(currentWeather: CurrentWeather) {
+        localDataSource.addCurrentWeather(currentWeather)
     }
 
     override fun getAllFavCities():Flow<List<City>>{
@@ -67,7 +74,7 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
         return localDataSource.deleteAlarm(alarm)
     }
 
-    override suspend fun deleteAlarmById(alarmId:Int){
-        return localDataSource.deleteAlarmById(alarmId)
-    }
+//    override suspend fun deleteAlarmById(alarmId:Int){
+//        return localDataSource.deleteAlarmById(alarmId)
+//    }
 }

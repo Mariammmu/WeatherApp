@@ -73,6 +73,7 @@ dependencies {
     //splashScreen
     implementation ("androidx.core:core-splashscreen:1.0.0")
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.appcompat)
 
     //Room
     val room_version = "2.6.1"

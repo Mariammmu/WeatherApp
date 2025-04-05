@@ -1,7 +1,7 @@
 package com.mariammuhammad.climate.model.remote
 
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 import com.mariammuhammad.climate.utiles.Constants
 import retrofit2.Response
 import retrofit2.http.GET

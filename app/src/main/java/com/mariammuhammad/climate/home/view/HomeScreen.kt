@@ -1,16 +1,8 @@
 package com.mariammuhammad.climate.home.view
 
-import android.app.AlertDialog
-import android.content.Context
-import android.location.LocationManager
-import android.telecom.Call.Details
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +10,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,45 +36,34 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import android.Manifest
 import android.util.Log
-import androidx.annotation.Size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import com.google.gson.Gson
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
-import com.mariammuhammad.climate.model.pojo.CurrentWeather
-import com.mariammuhammad.climate.model.pojo.ListDaysDetails
-import com.mariammuhammad.climate.model.pojo.NextDaysWeather
-import com.mariammuhammad.climate.settings.Settings
+import com.mariammuhammad.climate.model.data.CurrentWeather
+import com.mariammuhammad.climate.model.data.ListDaysDetails
+import com.mariammuhammad.climate.model.data.NextDaysWeather
 //import com.mariammuhammad.climate.navigation.BottomNavigationBar
 import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.ImageIcon
 import com.mariammuhammad.climate.utiles.LocationPermissionManager
 import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dateTimeFormater
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.dayFormater
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.getCountryName
-import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.timeFormater
+import com.mariammuhammad.climate.utiles.HelperFunctions.dateTimeFormater
+import com.mariammuhammad.climate.utiles.HelperFunctions.dayFormater
+import com.mariammuhammad.climate.utiles.HelperFunctions.getCountryName
+import com.mariammuhammad.climate.utiles.HelperFunctions.timeFormater
 
 
 //AIzaSyA5rMOFNsoUcLMTq3YiLny0A0mG48lmO3c
@@ -199,73 +178,6 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
      }
  }
 
-/*
-    val launcherActivity = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            if (locationUpdate.isLocationEnabled()) {
-                locationUpdate.getLastLocation { location ->
-                    location?.let {
-                        // Use loadWeather which handles caching automatically
-                        homeViewModel.loadWeather(
-                            it.latitude,
-                            it.longitude,
-                            units = unit,
-                            lang = lang
-                        )
-//                        homeViewModel.getCurrentWeather(
-//                            it.latitude,
-//                            it.longitude,
-//                            units = unit,
-//                            lang = lang
-//                        )
-                    }
-                }
-            } else {
-                locationUpdate.promptEnableLocationSettings()
-            }
-        } else {
-            locationPermissionManager.showLocationServiceRationaleDialog(context)
-        }
-    }
-
-
-    LaunchedEffect(Unit, favLat, favLon, unit, lang) {
-        if (favLat != null && favLon != null) {
-            // For favorite locations, use loadWeather which handles caching
-            homeViewModel.loadWeather(favLat, favLon, unit, lang)
-            homeViewModel.getCurrentWeather(favLat, favLon, unit, lang)
-        } else {
-            if (locationPermissionManager.isLocationPermissionGranted()) {
-                if (locationUpdate.isLocationEnabled()) {
-                    locationUpdate.getLastLocation { location ->
-                        location?.let {
-                            // Use loadWeather which handles caching
-                            homeViewModel.loadWeather(
-                                it.latitude,
-                                it.longitude,
-                                units = unit,
-                                lang = lang
-                            )
-//                            homeViewModel.getCurrentWeather(
-//                                it.latitude,
-//                                it.longitude,
-//                                units = unit,
-//                                lang = lang
-//                            )
-                        }
-                    }
-                } else {
-                    locationUpdate.promptEnableLocationSettings()
-                }
-            } else {
-                launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
-        }
-    }
-*/
-
     when (currentWeather) { //child
       is Response.Failure -> {
             isLoading = false
@@ -284,36 +196,6 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 CircularProgressIndicator(modifier = Modifier.size(100.dp))
             }
         }
-
-        /*
-        is Response.Failure -> {
-            val errorMsg = (currentWeather as Response.Failure).error
-            ErrorScreen(errorMsg.toString()) {
-                // Retry logic
-                if (favLat != null && favLon != null) {
-                    homeViewModel.loadWeather(favLat, favLon, unit, lang)
-                    homeViewModel.getCurrentWeather(favLat, favLon, unit, lang)
-                } else {
-                    locationUpdate.getLastLocation { location ->
-                        location?.let {
-                            homeViewModel.loadWeather(
-                                it.latitude,
-                                it.longitude,
-                                units = unit,
-                                lang = lang
-                            )
-//                            homeViewModel.getCurrentWeather(
-//                                it.latitude,
-//                                it.longitude,
-//                                units = unit,
-//                                lang = lang
-//                            )
-                        }
-                    }
-                }
-            }
-        }
-        */
 
         is Response.Success -> {
             val currentWeatherDetails = (currentWeather as Response.Success<CurrentWeather>).data
@@ -388,11 +270,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                                     .padding(top = 4.dp),
                                 contentScale = ContentScale.Fit
                             )
-                            //val date = Date(currentWeatherDetails.dt)
 
-                            //val calendar = Calendar.getInstance()
-                            //calendar.time = date
-                            //date and time
                             Text(
                                 text = currentWeatherDetails.dt.toLong()
                                     .dateTimeFormater(),   //calendar.get(Calendar.DAY_OF_WEEK).toString(),//currentWeatherDetails.dt.toString(),
@@ -640,7 +518,7 @@ fun WeatherDetails(weatherDetails: CurrentWeather) {
             WeatherDetailItem(
                 label = stringResource(R.string.wind_speed),
                 imageResource = R.drawable.wind2,
-                value = "${weatherDetails.wind.speed} m/s" //
+                value = "${weatherDetails.wind.speed} ${Constants.WIND_SPEED_MILE}" //
             )
         }
     }
@@ -696,7 +574,7 @@ fun HourlyWeatherItem(item: ListDaysDetails) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = item.dt.toLong().timeFormater(),
+                text = item.dt.timeFormater(),
                 fontSize = 12.sp,
                 color = Color.White
             )
