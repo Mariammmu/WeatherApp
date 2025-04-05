@@ -36,7 +36,7 @@ class WeatherRemoteDataSource(private val service: WeatherService) {
         lang: String
     ): Flow<NextDaysWeather> = flow {
         emit(service.get5DaysEvery3Hours(lat, lon, tempUnit, lang))
-         Log.i("TAG", "get5DaysEvery3Hours:${Gson().toJson(service.get5DaysEvery3Hours(lat, lon, tempUnit, lang))} ")
+        // Log.i("TAG", "get5DaysEvery3Hours:${Gson().toJson(service.get5DaysEvery3Hours(lat, lon, tempUnit, lang))} ")
     }
 
     suspend fun getLocationOnMap(searchText: String, placesClient: PlacesClient) : Flow<LatLng>{

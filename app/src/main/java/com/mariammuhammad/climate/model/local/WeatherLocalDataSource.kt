@@ -31,10 +31,6 @@ class WeatherLocalDataSource (
         weatherDao.insertAllCurrentWeather(weatherResponse)
     }
 
-     override suspend fun removeAllWeather() {
-        weatherDao.deleteAllWeather()
-    }
-
     override fun getAllAlarms():Flow<List<Alarm>>{
         return alarmDao.getAllAlarms()
     }

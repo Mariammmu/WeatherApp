@@ -1,6 +1,7 @@
 package com.mariammuhammad.climate.Alert.view
 
 import android.app.TimePickerDialog
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -61,15 +62,23 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.mariammuhammad.climate.Alert.viewmodel.AlertViewModel
+import com.mariammuhammad.climate.Alert.worker.MyWorkManager
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.model.pojo.Alarm
 import com.mariammuhammad.climate.navigation.NavigationRoute
+import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.Response
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +89,8 @@ fun WeatherAlarmScreen(
     val alarmsState = alertViewModel.alarms.collectAsState()
     var showAddAlarmDialog by remember { mutableStateOf(false) }
     val alarmState = rememberAlarmCreationState()
+
+    val context= LocalContext.current
 
     LaunchedEffect(Unit) {
         alertViewModel.getAlarms()
@@ -92,9 +103,25 @@ fun WeatherAlarmScreen(
         onAddAlarmClick = { showAddAlarmDialog = true },
         onDismissDialog = { showAddAlarmDialog = false },
         onSaveAlarm = { alarm ->
+            val delay: Long = alarm.hour / 1000L - System.currentTimeMillis() / 1000L
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresCharging(false)
+                .build()
+
+            val data = Data.Builder()
+                .putDouble(Constants.LATITUDE, alarm.lat)
+                .putDouble(Constants.LONGITUDE, alarm.lon)
+                .build()
             alertViewModel.addAlarm(alarm)
-            showAddAlarmDialog = false
+            val request = OneTimeWorkRequestBuilder<MyWorkManager>()
+                .setInitialDelay(delay, TimeUnit.SECONDS)
+                .setInputData(data)
+                .setConstraints(constraints)
+                .build()
+            WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
         },
+
         onDeleteAlarm = alertViewModel::deleteAlarm
     )
 }
@@ -105,7 +132,6 @@ private fun rememberAlarmCreationState() = remember {
         AlarmCreationState(
             startDate = null,
             startTime = null,
-            endDate = null,
             endTime = null,
             notificationType = NotificationType.ALARM
         )
@@ -173,7 +199,6 @@ private fun WeatherAlarmContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddAlarmDialog(
     state: AlarmCreationState,
@@ -184,7 +209,11 @@ private fun AddAlarmDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create Weather Alert") },
+        title = { Text("Create Weather Alert",
+            color = colorResource(R.color.background),
+            fontFamily = FontFamily(Font(R.font.alfa_slab))
+
+        ) },
         text = {
             AlarmCreationForm(
                 state = currentState.value,
@@ -207,7 +236,9 @@ private fun AddAlarmDialog(
                 Text("CANCEL")
             }
         },
-        containerColor = colorResource(R.color.background)
+        containerColor = colorResource(R.color.light_purple),
+        textContentColor = colorResource(R.color.background)
+
     )
 }
 
@@ -217,13 +248,15 @@ private fun AlarmCreationForm(
     onStateChange: (AlarmCreationState) -> Unit
 ) {
     Column  {
+        Text("Pick a date", fontFamily = FontFamily(Font(R.font.alfa_slab)))
+
         DatePickerRow(
-            label = "Pick a date",
+            label = "",
             selectedDate = state.startDate,
             onDateSelected = { onStateChange(state.copy(startDate = it)) }
         )
 
-        Text("Start Time", style = MaterialTheme.typography.labelMedium)
+        Text("Start Time", fontFamily = FontFamily(Font(R.font.alfa_slab)))
         TimePickerRow(
             label = "Start time",
             selectedTime = state.startTime,
@@ -233,12 +266,7 @@ private fun AlarmCreationForm(
         Spacer(modifier = Modifier.height(16.dp))
 
         // End Date/Time
-        Text("End Time", style = MaterialTheme.typography.labelMedium)
-//        DatePickerRow(
-//            label = "End date",
-//            selectedDate = state.endDate,
-//            onDateSelected = { onStateChange(state.copy(endDate = it)) }
-//        )
+        Text("End Time", fontFamily = FontFamily(Font(R.font.alfa_slab)))
         TimePickerRow(
             label = "End time",
             selectedTime = state.endTime,
@@ -247,8 +275,7 @@ private fun AlarmCreationForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Notification Type
-        Text("Notify me by", style = MaterialTheme.typography.labelMedium)
+        Text("Notify me by", fontFamily = FontFamily(Font(R.font.alfa_slab)))
         NotificationTypeSelector(
             selectedType = state.notificationType,
             onTypeSelected = { onStateChange(state.copy(notificationType = it)) }
@@ -278,10 +305,13 @@ fun DatePickerRow(
             painter = painterResource(R.drawable.google_calendar_icon), // Make sure you have this icon
             contentDescription = label,
             modifier = Modifier.padding(end = 8.dp),
+            tint= Color.Unspecified
         )
         Text(
-            text = "$label: ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: "Select date"}",
-            modifier = Modifier.weight(1f)
+            text = "$label ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: "Select a date"}",
+            modifier = Modifier.weight(1f),
+            color = colorResource(R.color.background),
+            fontFamily = FontFamily(Font(R.font.alfa_slab))
         )
     }
 
@@ -335,8 +365,9 @@ fun TimePickerRow(
         val hour = it.first
         val minute = it.second
         val amPm = if (it.third) "PM" else "AM"
-        "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} $amPm"
-    } ?: "Select time"
+        "${hour.toString().padStart(2, '0')} : ${minute.toString().padStart(2, '0')} $amPm"
+    }
+//    val timeInMillie= formattedTime(System.currentTimeMillis()/1000).toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -351,8 +382,13 @@ fun TimePickerRow(
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = "$label: $formattedTime",
-            modifier = Modifier.weight(1f)
+            text = "$label: ${formattedTime?:"Select Time"}",
+            modifier = Modifier.weight(1f),
+            color = colorResource(R.color.background),
+            fontFamily = FontFamily(Font(R.font.alfa_slab))
+
+
+
         )
     }
 
@@ -381,98 +417,6 @@ fun TimePickerRow(
         ).show()
     }
 }
-
-@Composable
-@Preview
-fun TimePickerRowPreview() {
-    var selectedTime by remember { mutableStateOf<Triple<Int, Int, Boolean>?>(null) }
-
-    TimePickerRow(
-        label = "Alarm Time",
-        selectedTime = selectedTime,
-        onTimeSelected = { time ->
-            selectedTime = time
-        }
-    )
-}
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerRow(
-    label: String,
-    selectedTime: Triple<Int, Int, Boolean>?, // (hour, minute, isPM)
-    onTimeSelected: (Triple<Int, Int, Boolean>) -> Unit
-) {
-    var showTimePicker by remember { mutableStateOf(false) }
-    val currentTime = Calendar.getInstance()
-
-    // Format to show time
-    val formattedTime = selectedTime?.let {
-        val hour = it.first
-        val minute = it.second
-        val amPm = if (it.third) "PM" else "AM"
-        "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} $amPm"
-    } ?: "Select time"
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showTimePicker = true }
-            .padding(vertical = 8.dp)
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.pending_clock_icon), // Ensure this icon exists
-            contentDescription = label,
-            modifier = Modifier.padding(end = 8.dp)
-        )
-        Text(
-            text = "$label: $formattedTime",
-            modifier = Modifier.weight(1f)
-        )
-    }
-
-    if (showTimePicker) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = selectedTime?.let { if (it.third) it.first + 12 else it.first }
-                ?: currentTime.get(Calendar.HOUR_OF_DAY),
-            initialMinute = selectedTime?.second ?: currentTime.get(Calendar.MINUTE),
-            is24Hour = false // set to true for 24-hour format
-        )
-
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val isPM = timePickerState.hour >= 12
-                        val hour12 = when {
-                            timePickerState.hour == 0 -> 12
-                            timePickerState.hour > 12 -> timePickerState.hour - 12
-                            else -> timePickerState.hour
-                        }
-                        // Pass the selected time back with the 12-hour format and AM/PM indicator
-                        onTimeSelected(Triple(hour12, timePickerState.minute, isPM))
-                        showTimePicker = false
-                    }
-                ) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            TimePicker(
-                state = timePickerState,
-                modifier = Modifier.padding(16.dp),
-
-            )
-        }
-    }
-} */
 
 @Composable
 private fun NotificationTypeSelector(
@@ -561,17 +505,18 @@ private fun AlarmItem(
             )
 
             Text(
-                text = "Location: (${alarm.lat.roundToDecimals(2)}, ${alarm.lon.roundToDecimals(2)})",
+//                text = "Location: (${alarm.lat.roundToDecimals(2)}, ${alarm.lon.roundToDecimals(2)})",
+                text = "Location: (${alarm.lat}, ${alarm.lon})",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp))
         }
     }
 }
 
-private fun Double.roundToDecimals(decimalCount: Int): Double {
-    val factor = 10.0.pow(decimalCount)
-    return (this * factor).roundToInt() / factor
-}
+//private fun Double.roundToDecimals(decimalCount: Int): Double {
+//    val factor = 10.0.pow(decimalCount)
+//    return (this * factor).roundToInt() / factor
+//}
 @Composable
 private fun ErrorMessage(
     message: String,
@@ -605,7 +550,6 @@ private fun ErrorMessage(
 data class AlarmCreationState(
     val startDate: Long?,
     val startTime: Triple<Int, Int, Boolean>?,
-    val endDate: Long?,
     val endTime: Triple<Int, Int, Boolean>?,
     val notificationType: NotificationType
 )
@@ -624,7 +568,6 @@ private fun createAlarmFromState(state: AlarmCreationState): Alarm {
 private fun isAlarmStateValid(state: AlarmCreationState): Boolean {
     return state.startDate != null &&
             state.startTime != null &&
-            state.endDate != null &&
             state.endTime != null
 }
 

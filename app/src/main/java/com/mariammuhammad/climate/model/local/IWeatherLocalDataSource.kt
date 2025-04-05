@@ -12,7 +12,6 @@ interface IWeatherLocalDataSource {
 
     fun getAllStoredWeather(): Flow<NextDaysWeather>
     suspend fun addCurrentWeather(weatherResponse: NextDaysWeather)
-    suspend fun removeAllWeather()
 
     fun getAllAlarms():Flow<List<Alarm>>
     suspend fun addAlarm(alarm: Alarm):Long

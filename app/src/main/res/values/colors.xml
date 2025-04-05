@@ -12,4 +12,9 @@
     <color name="off_white">#F2EFF7FF</color>
     <color name="violet">#9B7EAF</color>
     <color name="dark_purple">#6650A4</color>
+    <color name="pink">#EFB8C8</color>
+    <color name="light_purple">#D0BCFF</color>
+    <color name="purple_grey">#CCC2DC</color>
+
+
 </resources>

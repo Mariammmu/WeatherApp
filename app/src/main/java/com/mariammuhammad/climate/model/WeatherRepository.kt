@@ -38,7 +38,6 @@ interface WeatherRepository {
 
     suspend fun insertCurrentWeather(weatherResponse: NextDaysWeather)
 
-    suspend fun deleteStoredCurrentWeather()
 
 
     fun getAlarms():Flow<List<Alarm>>

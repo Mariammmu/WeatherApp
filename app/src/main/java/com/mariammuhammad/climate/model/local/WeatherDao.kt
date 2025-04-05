@@ -16,6 +16,4 @@ interface WeatherDao {
     @Query("SELECT * FROM weather")
     fun getStoredWeather(): Flow<NextDaysWeather>
 
-    @Query("DELETE FROM weather")
-    suspend fun deleteAllWeather()
 }

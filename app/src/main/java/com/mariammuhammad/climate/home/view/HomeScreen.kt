@@ -58,6 +58,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -91,7 +92,6 @@ import com.mariammuhammad.climate.utiles.TimeAndDateFormatting.timeFormater
 //AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y
 //@Preview(showSystemUi = true)
 
-private var tempUnit = ""
 private var windSpeedUnit = ""
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -101,22 +101,30 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
     var context = LocalContext.current
     val snackBarHostState = remember { SnackbarHostState() }
 //    val weatherPrefs = remember { Settings.WeatherSettings.getInstance(context) }
-//    var favLat by rememberSaveable { mutableStateOf(0.0) }
-//    var favLon by rememberSaveable { mutableStateOf(0.0) }
-    var defaultLat by remember { mutableStateOf(0.0) }
-    var defaultLon by remember { mutableStateOf(0.0) }
+    val message by homeViewModel.showMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
     val locationUpdate = LocationUpdate(context)
     var isLoading by rememberSaveable { mutableStateOf(true) }
-    var getData by rememberSaveable { mutableStateOf(true) }
     var isDataShown by rememberSaveable { mutableStateOf(false) }
-    var unit by rememberSaveable { mutableStateOf("metric") }
-    var lang by rememberSaveable { mutableStateOf("en") }
+
+
+    LaunchedEffect(Unit) {
+        homeViewModel.initialize(context)
+    }
+
+    LaunchedEffect(message) {
+        message?.let {
+            snackBarHostState.showSnackbar(it)
+            homeViewModel.messageShown()
+        }
+    }
 
     val locationPermissionManager = LocationPermissionManager(context)
 
-    val launcherActivity =
+
+     val launcherActivity =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 if (locationUpdate.isLocationEnabled()) {
@@ -126,14 +134,14 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                             homeViewModel.get5DaysWeather(
                                 it.latitude,
                                 location.longitude,
-                                tempUnit = unit,
-                                lang = lang
+                                tempUnit = Constants.UNITS_CELSIUS,
+                                lang = Constants.LANGUAGE_EN
                             )
                             homeViewModel.getCurrentWeather(
                                 it.latitude,
                                 location.longitude,
-                                units = unit,
-                                lang = lang
+                                units = Constants.UNITS_CELSIUS,
+                                lang = Constants.LANGUAGE_EN
                             )
                         }
                     }
@@ -147,40 +155,105 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
             }
         }
 
-    // Check if location permission is granted and location services are enabled
     LaunchedEffect(Unit) {  //non composable code inside a composable funstion
-        if((favLat!=null && favLon!=null)){
-            Log.i("TAG", "HomeScreen: if Fav  true")
-            homeViewModel.getCurrentWeather(favLat,
-                favLon,
-                units = unit,
-                lang= lang
-            )
+     if((favLat!=null && favLon!=null)){
+         Log.i("TAG", "HomeScreen: if Fav  true")
+         homeViewModel.getCurrentWeather(favLat,
+             favLon,
+             units = Constants.UNITS_CELSIUS,
+             lang= Constants.LANGUAGE_EN
+         )
 
-            homeViewModel.get5DaysWeather(favLat,
-                favLon,
-                tempUnit = unit,
-                lang=lang
-            )
-        }else{
-            Log.i("TAG", "HomeScreen: if Fav  false")
-            
+         homeViewModel.get5DaysWeather(favLat,
+             favLon,
+             tempUnit = Constants.UNITS_CELSIUS,
+             lang=Constants.LANGUAGE_EN
+         )
+     }else{
+         Log.i("TAG", "HomeScreen: if Fav  false")
+
+         if (locationPermissionManager.isLocationPermissionGranted()) {
+             if (locationUpdate.isLocationEnabled()) {
+                 locationUpdate.getLastLocation { location ->
+                     location?.let {
+                         homeViewModel.getCurrentWeather(
+                             it.latitude,
+                             it.longitude,
+                             units = Constants.UNITS_CELSIUS,
+                             lang = Constants.LANGUAGE_EN
+                         )
+                         homeViewModel.get5DaysWeather(
+                             it.latitude,
+                             location.longitude,
+                             tempUnit = Constants.UNITS_CELSIUS,
+                             lang = Constants.LANGUAGE_EN
+                         )
+                     }
+                 }
+             } else {
+                 locationUpdate.promptEnableLocationSettings()
+             }
+         } else {
+             launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+         }
+     }
+ }
+
+/*
+    val launcherActivity = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            if (locationUpdate.isLocationEnabled()) {
+                locationUpdate.getLastLocation { location ->
+                    location?.let {
+                        // Use loadWeather which handles caching automatically
+                        homeViewModel.loadWeather(
+                            it.latitude,
+                            it.longitude,
+                            units = unit,
+                            lang = lang
+                        )
+//                        homeViewModel.getCurrentWeather(
+//                            it.latitude,
+//                            it.longitude,
+//                            units = unit,
+//                            lang = lang
+//                        )
+                    }
+                }
+            } else {
+                locationUpdate.promptEnableLocationSettings()
+            }
+        } else {
+            locationPermissionManager.showLocationServiceRationaleDialog(context)
+        }
+    }
+
+
+    LaunchedEffect(Unit, favLat, favLon, unit, lang) {
+        if (favLat != null && favLon != null) {
+            // For favorite locations, use loadWeather which handles caching
+            homeViewModel.loadWeather(favLat, favLon, unit, lang)
+            homeViewModel.getCurrentWeather(favLat, favLon, unit, lang)
+        } else {
             if (locationPermissionManager.isLocationPermissionGranted()) {
                 if (locationUpdate.isLocationEnabled()) {
                     locationUpdate.getLastLocation { location ->
                         location?.let {
-                            homeViewModel.getCurrentWeather(
+                            // Use loadWeather which handles caching
+                            homeViewModel.loadWeather(
                                 it.latitude,
                                 it.longitude,
                                 units = unit,
                                 lang = lang
                             )
-                            homeViewModel.get5DaysWeather(
-                                it.latitude,
-                                location.longitude,
-                                tempUnit = unit,
-                                lang = lang
-                            )
+//                            homeViewModel.getCurrentWeather(
+//                                it.latitude,
+//                                it.longitude,
+//                                units = unit,
+//                                lang = lang
+//                            )
                         }
                     }
                 } else {
@@ -190,21 +263,18 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
-
-
     }
-
-
-
+*/
 
     when (currentWeather) { //child
-        is Response.Failure -> {
+      is Response.Failure -> {
             isLoading = false
             if (!isDataShown) {
                 val errorMsg = (currentWeather as Response.Failure).error
                 ShowErrorMessage(errorMsg)
             }
         }
+
         Response.Loading -> {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -214,6 +284,37 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 CircularProgressIndicator(modifier = Modifier.size(100.dp))
             }
         }
+
+        /*
+        is Response.Failure -> {
+            val errorMsg = (currentWeather as Response.Failure).error
+            ErrorScreen(errorMsg.toString()) {
+                // Retry logic
+                if (favLat != null && favLon != null) {
+                    homeViewModel.loadWeather(favLat, favLon, unit, lang)
+                    homeViewModel.getCurrentWeather(favLat, favLon, unit, lang)
+                } else {
+                    locationUpdate.getLastLocation { location ->
+                        location?.let {
+                            homeViewModel.loadWeather(
+                                it.latitude,
+                                it.longitude,
+                                units = unit,
+                                lang = lang
+                            )
+//                            homeViewModel.getCurrentWeather(
+//                                it.latitude,
+//                                it.longitude,
+//                                units = unit,
+//                                lang = lang
+//                            )
+                        }
+                    }
+                }
+            }
+        }
+        */
+
         is Response.Success -> {
             val currentWeatherDetails = (currentWeather as Response.Success<CurrentWeather>).data
             Log.i("TAG", "CurrentWeather:${currentWeatherDetails.name}")
@@ -665,6 +766,29 @@ fun DailyForecastItem(day: ListDaysDetails) {
         }
     }
 }
+
+// @Composable
+//fun ErrorScreen(error: String, onRetry: () -> Unit) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(16.dp),
+//        verticalArrangement = Arrangement.Center,
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Text(
+//            text = "Error: $error",
+//            color = Color.Red,
+//            fontSize = 18.sp,
+//            modifier = Modifier.padding(16.dp)
+//        )
+//        Button(onClick = onRetry) {
+//            Text("Retry")
+//        }
+//    }
+//}
+
+
 
 @Composable
 fun ShowErrorMessage(errorMsg: Throwable) {

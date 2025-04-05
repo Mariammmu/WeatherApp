@@ -76,7 +76,6 @@ class HomeViewModelTest {
                 wind = Wind(deg = 180, gust = 5.0, speed = 5.0),
                 clouds = Clouds(all = 0),
                 visibility = 10000,
-                pop = 0,
                 sys = Sys(country = "DE", sunrise = 1672500000, sunset = 1672550000),
                 dtTxt = "2025-04-02 15:00:00",
                 pod = PeriodOfDay("morning"),

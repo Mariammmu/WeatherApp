@@ -39,10 +39,6 @@ class WeatherRepositoryImpl (private val remoteDataSource: WeatherRemoteDataSour
         localDataSource.addCurrentWeather(weatherResponse)
     }
 
-    override suspend fun deleteStoredCurrentWeather() {
-        localDataSource.removeAllWeather()
-    }
-
     override fun getAllFavCities():Flow<List<City>>{
         return localDataSource.getAllFavCities()
     }
