@@ -115,7 +115,21 @@ class SettingsViewModel(private val repository: SettingsRepo) : ViewModel() {
             }
         }
     }
+
+    fun saveWindSpeedUnit(unit: String) {
+        viewModelScope.launch {
+            _windSpeedUnit.value = Response.Loading
+            try {
+                repository.saveWindSpeedUnit(unit)
+                _windSpeedUnit.value = Response.Success(unit)
+            } catch (e: Exception) {
+                _windSpeedUnit.value = Response.Failure(e)
+            }
+        }
+    }
 }
+
+
 
 class SettingsViewModelFactory(
     private val repository: SettingsRepo,

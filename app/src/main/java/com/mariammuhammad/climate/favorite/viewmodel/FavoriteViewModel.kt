@@ -48,9 +48,9 @@ class FavoriteViewModel(private val repository: WeatherRepository) : ViewModel()
             try {
                 repository.addFavCity(city)
 
-                // Get the current list of cities and append the new one
-                val currentCities = (_favoriteCities.value as? Response.Success)?.data ?: emptyList()
-                _favoriteCities.value = Response.Success(currentCities + city)
+                getFavCities()
+              //  val currentCities = (_favoriteCities.value as? Response.Success)?.data ?: emptyList()
+               // _favoriteCities.value = Response.Success(currentCities + city)
 
             } catch (e: Exception) {
                 _favoriteCities.value = Response.Failure(e)

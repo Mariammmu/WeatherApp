@@ -55,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.home.viewmodel.HomeViewModel
 import com.mariammuhammad.climate.model.data.CurrentWeather
@@ -80,6 +81,7 @@ import kotlin.time.Duration
 //@Preview(showSystemUi = true)
 
 private var windSpeedUnit = ""
+private var temperatureUnit = ""
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -91,14 +93,23 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
     val snackbarHostState = remember { SnackbarHostState() }
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
+    val locationPermissionManager = LocationPermissionManager(context)
     val storedCurrentWeather by homeViewModel.storedCurrentWeather.collectAsState()
     val storedNextDaysWeather by homeViewModel.storedNextDaysWeather.collectAsState()
     val settingsPrefs = remember {
         SettingsPrefs(context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE))}
 
     val locationUpdate = LocationUpdate(context)
-    // var isLoading by rememberSaveable { mutableStateOf(true) }
-    // var isDataShown by rememberSaveable { mutableStateOf(false) }
+
+    homeViewModel.getSavedSettings()
+    val tempUnit = homeViewModel.tempUnit.collectAsStateWithLifecycle()
+    val language = homeViewModel.language.collectAsStateWithLifecycle()
+    val locationFinder = homeViewModel.locationFinder.collectAsStateWithLifecycle()
+    val savedLatitude = homeViewModel.savedLatitude.collectAsStateWithLifecycle()
+    val savedLongitude = homeViewModel.savedLongitude.collectAsStateWithLifecycle()
+    val windUnit= homeViewModel.windUnit.collectAsStateWithLifecycle()
+//     var isLoading by rememberSaveable { mutableStateOf(true) }
+//     var isDataShown by rememberSaveable { mutableStateOf(false) }
 
 
     LaunchedEffect(Unit) {
@@ -117,106 +128,24 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
         }
     }
 
-
-//    LaunchedEffect(storedCurrentWeather) {
-//        if (storedCurrentWeather is Response.Success && currentWeather is Response.Success) {
-//            if ((currentWeather as Response.Success).data == (storedCurrentWeather as Response.Success).data) {
-//                snackBarHostState.showSnackbar(
-//                    message = "Showing cached data (offline)",
-//                    duration = SnackbarDuration.Short
-//                )
-//            }
-//        }
-//    }
-
-
-//    LaunchedEffect(message) {
-//        message?.let {
-//            if (it.contains("No internet")) {
-//                snackBarHostState.showSnackbar(it)
-//                homeViewModel.messageShown()
-//            }
-//        }
-//    }
-
-    val locationPermissionManager = LocationPermissionManager(context)
-
-    /*
-     val launcherActivity =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                if (locationUpdate.isLocationEnabled()) {
-                    locationUpdate.getLastLocation { location ->
-                        // fetch weather data after getting the location
-                        location?.let {
-                            homeViewModel.get5DaysWeather(
-                                it.latitude,
-                                location.longitude,
-                                tempUnit = Constants.UNITS_CELSIUS,
-                                lang = Constants.LANGUAGE_EN
-                            )
-                            homeViewModel.getCurrentWeather(
-                                it.latitude,
-                                location.longitude,
-                                units = Constants.UNITS_CELSIUS,
-                                lang = Constants.LANGUAGE_EN
-                            )
-                        }
-                    }
-                } else {
-                    locationUpdate.promptEnableLocationSettings()
-                }
-            } else {
-                // Show message if permission is denied
-                locationPermissionManager.showLocationServiceRationaleDialog(context)
-               // Toast.makeText(context, "Please enable location permission.", Toast.LENGTH_SHORT).show()
-            }
+    when (tempUnit.value) {
+        "imperial" -> {
+            temperatureUnit = stringResource(R.string.f)
+            windSpeedUnit = stringResource(R.string.mile_hour)
         }
 
-    LaunchedEffect(Unit) {  //non composable code inside a composable funstion
-     if((favLat!=null && favLon!=null)){
-         Log.i("TAG", "HomeScreen: if Fav  true")
-         homeViewModel.getCurrentWeather(favLat,
-             favLon,
-             units = Constants.UNITS_CELSIUS,
-             lang= Constants.LANGUAGE_EN
-         )
+        "metric" -> {
+            temperatureUnit = stringResource(R.string.c)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
 
-         homeViewModel.get5DaysWeather(favLat,
-             favLon,
-             tempUnit = Constants.UNITS_CELSIUS,
-             lang=Constants.LANGUAGE_EN
-         )
-     }else{
-         Log.i("TAG", "HomeScreen: if Fav  false")
+        else -> {
+            temperatureUnit = stringResource(R.string.k)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
+    }
 
-         if (locationPermissionManager.isLocationPermissionGranted()) {
-             if (locationUpdate.isLocationEnabled()) {
-                 locationUpdate.getLastLocation { location ->
-                     location?.let {
-                         homeViewModel.getCurrentWeather(
-                             it.latitude,
-                             it.longitude,
-                             units = Constants.UNITS_CELSIUS,
-                             lang = Constants.LANGUAGE_EN
-                         )
-                         homeViewModel.get5DaysWeather(
-                             it.latitude,
-                             location.longitude,
-                             tempUnit = Constants.UNITS_CELSIUS,
-                             lang = Constants.LANGUAGE_EN
-                         )
-                     }
-                 }
-             } else {
-                 locationUpdate.promptEnableLocationSettings()
-             }
-         } else {
-             launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-         }
-     }
- }
-*/
+
 
     val launcherActivity = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -247,9 +176,9 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
             homeViewModel.loadData(
                 favLat,
                 favLon,
-                Constants.UNITS_CELSIUS,
-                Constants.LANGUAGE_EN
-            )
+                settingsPrefs.getTemperatureUnit(),
+                settingsPrefs.getLanguage(),
+                )
         } else {
             if (locationPermissionManager.isLocationPermissionGranted()) {
                 if (locationUpdate.isLocationEnabled()) {
@@ -259,7 +188,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                                 it.latitude,
                                 it.longitude,
                                 settingsPrefs.getTemperatureUnit(), //Constants.UNITS_CELSIUS,
-                                Constants.LANGUAGE_EN
+                                settingsPrefs.getLanguage(),
                             )
                         }
                     }
@@ -291,7 +220,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                             favLon,
                             settingsPrefs.getTemperatureUnit(),
                             //Constants.UNITS_CELSIUS,
-                            Constants.LANGUAGE_EN
+                            settingsPrefs.getLanguage(),
                         )
                     } else {
                         locationUpdate.getLastLocation { location ->
@@ -302,7 +231,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                                     settingsPrefs.getTemperatureUnit(),
 
                                     // Constants.UNITS_CELSIUS,
-                                    Constants.LANGUAGE_EN
+                                    settingsPrefs.getLanguage(),
                                 )
                             }
                         }
@@ -329,7 +258,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
             val hourlyForecast = when (nextDaysWeather) {
                 is Response.Success -> {
                     val forecast = (nextDaysWeather as Response.Success<NextDaysWeather>).data
-                    Log.i("HOURLY_DEBUG", "Forecast items: ${forecast.list?.size}")
+                    Log.i("HOURLY_DEBUG", "Forecast items: ${forecast.list.size}")
                     forecast.list.take(12)
                 }
 
@@ -358,7 +287,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 )
 
                 Image(
-                    painter = painterResource(id = R.drawable.weather), // use a pic from drawable resource
+                    painter = painterResource(id = R.drawable.weather),
                     contentDescription = "background image",
                     modifier = Modifier.fillMaxSize(), // to ensure the image fills the entire Box
                     contentScale = ContentScale.FillBounds
@@ -420,7 +349,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                             ) {
                                 //weather temperature
                                 Text(
-                                    text = "${currentWeatherDetails.main.temp.toInt()}",
+                                    text = "${currentWeatherDetails.main.temp.toInt()} ",
                                     fontSize = 60.sp, fontWeight = FontWeight.Bold,
                                     color = colorResource(R.color.off_white),
                                     fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -429,7 +358,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
-                                    text =" °C", //"$tempUnit",//" °C",
+                                    text = temperatureUnit,//" °C",
                                     fontSize = 60.sp, fontWeight = FontWeight.Bold,
                                     color = colorResource(R.color.off_white),
                                     fontFamily = FontFamily(Font(R.font.alfa_slab)),
@@ -572,13 +501,13 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
 
                             if (dailyForecast.isEmpty()) {
                                 if (nextDaysWeather is Response.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .align(Alignment.CenterHorizontally)
-                                            .padding(16.dp),
-                                        color = Color.White
-                                    )
+//                                    CircularProgressIndicator(
+//                                        modifier = Modifier
+//                                            .size(40.dp)
+//                                            .align(Alignment.CenterHorizontally)
+//                                            .padding(16.dp),
+//                                        color = Color.White
+//                                    )
                                 } else {
                                     Text(
                                         text = "No forecast data available",
@@ -620,7 +549,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 WeatherDetailItem(
                     label = stringResource(R.string.pressure),
                     imageResource = R.drawable.pressure2,
-                    value = "${weatherDetails.main.pressure} hpa"
+                    value = "${weatherDetails.main.pressure} "+stringResource(R.string.hpa)
                 )
 
                 WeatherDetailItem(
@@ -653,7 +582,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 WeatherDetailItem(
                     label = stringResource(R.string.wind_speed),
                     imageResource = R.drawable.wind2,
-                    value = "${weatherDetails.wind.speed} ${Constants.WIND_SPEED_MILE}" //
+                    value = "${weatherDetails.wind.speed} "+ windSpeedUnit //
                 )
             }
         }
@@ -772,7 +701,7 @@ fun DailyForecastItem(day: ListDaysDetails) {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = "Feels like ${day.main.feelsLike.toInt()}°",
+                    text = stringResource(R.string.feels_like)+" ${day.main.feelsLike.toInt()}°",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -802,10 +731,8 @@ fun ErrorScreen(error: String, onRetry: () -> Unit) {
     }
 }
 
-
-
-@Composable
-fun ShowErrorMessage(errorMsg: Throwable) {
-    Text(text = errorMsg.toString(), fontSize = 24.sp)
-}
+//@Composable
+//fun ShowErrorMessage(errorMsg: Throwable) {
+//    Text(text = errorMsg.toString(), fontSize = 24.sp)
+//}
 

@@ -24,6 +24,15 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDjfrDmJIFJRxD4WGeq40osxSoGp6PrD4Y" />
 
+        <receiver android:name=".Alert.worker.NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="SNOOZE_ACTION" />
+                <action android:name="DISMISS_ACTION" />
+            </intent-filter>
+        </receiver>
+
+
         <activity
             android:name=".view.MainActivity"
             android:exported="true"

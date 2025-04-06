@@ -9,6 +9,7 @@ import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AlertViewModel(private val repository: WeatherRepository) : ViewModel() {
@@ -39,8 +40,8 @@ class AlertViewModel(private val repository: WeatherRepository) : ViewModel() {
             try {
                 repository.insertAlarm(alarm)
 
-                val currentAlarms = (_alarms.value as? Response.Success)?.data ?: emptyList()
-                _alarms.value = Response.Success(currentAlarms + alarm)
+                val updatedList = repository.getAlarms().first()
+                _alarms.value = Response.Success(updatedList)
             } catch (e: Exception) {
                 _alarms.value = Response.Failure(e)
             }

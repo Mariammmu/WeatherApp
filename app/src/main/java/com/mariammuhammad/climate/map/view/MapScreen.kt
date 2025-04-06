@@ -43,6 +43,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
+import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.Response
 
     @Composable
@@ -111,8 +112,8 @@ import com.mariammuhammad.climate.utiles.Response
                                     favViewModel.getRemote5Days3HoursWeather(
                                         latLng.latitude,
                                         latLng.longitude,
-                                        "metric",
-                                        "en"
+                                        Constants.UNITS_CELSIUS,
+                                        Constants.LANGUAGE_EN
                                     )
                                     if (next5Days is Response.Success) {
                                         next5Days.data.city?.let {

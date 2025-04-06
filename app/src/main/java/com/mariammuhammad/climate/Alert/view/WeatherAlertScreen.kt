@@ -102,6 +102,7 @@ fun WeatherAlarmScreen(
         onAddAlarmClick = { showAddAlarmDialog = true },
         onDismissDialog = { showAddAlarmDialog = false },
         onSaveAlarm = { alarm ->
+            showAddAlarmDialog = false
 
             val locationUpdate = LocationUpdate(context)
 
@@ -137,7 +138,6 @@ fun WeatherAlarmScreen(
                 WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
 
             }
-            showAddAlarmDialog = false
 
 
         },
@@ -187,9 +187,7 @@ private fun WeatherAlarmScaffold(
                 }
                 else{
                     onAddAlarmClick()
-
                 }
-
 
             }
             ) {
@@ -252,7 +250,7 @@ private fun AddAlarmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "Create Weather Alert",
+                stringResource(R.string.create_weather_alert),
                 color = colorResource(R.color.background),
                 fontFamily = FontFamily(Font(R.font.alfa_slab))
 
@@ -272,12 +270,12 @@ private fun AddAlarmDialog(
                 },
                 enabled = isAlarmStateValid(currentState.value)
             ) {
-                Text("SAVE")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("CANCEL")
+                Text(stringResource(R.string.cancel))
             }
         },
         containerColor = colorResource(R.color.off_white),
@@ -292,7 +290,7 @@ private fun AlarmCreationForm(
     onStateChange: (AlarmCreationState) -> Unit
 ) {
     Column {
-        Text("Pick a date", fontFamily = FontFamily(Font(R.font.alfa_slab)))
+        Text(stringResource(R.string.pick_a_date), fontFamily = FontFamily(Font(R.font.alfa_slab)))
 
         DatePickerRow(
             label = "",
@@ -300,9 +298,9 @@ private fun AlarmCreationForm(
             onDateSelected = { onStateChange(state.copy(startDate = it)) }
         )
 
-        Text("Start Time", fontFamily = FontFamily(Font(R.font.alfa_slab)))
+        Text(stringResource(R.string.start_time), fontFamily = FontFamily(Font(R.font.alfa_slab)))
         TimePickerRow(
-            label = "Start time",
+            label = stringResource(R.string.start_time),
             selectedTime = state.startTime,
             onTimeSelected = { onStateChange(state.copy(startTime = it)) }
         )
@@ -310,9 +308,9 @@ private fun AlarmCreationForm(
         Spacer(modifier = Modifier.height(16.dp))
 
         // End Date/Time
-        Text("End Time", fontFamily = FontFamily(Font(R.font.alfa_slab)))
+        Text(stringResource(R.string.end_time), fontFamily = FontFamily(Font(R.font.alfa_slab)))
         TimePickerRow(
-            label = "End time",
+            label = stringResource(R.string.end_time),
             selectedTime = state.endTime,
             onTimeSelected = { onStateChange(state.copy(endTime = it)) }
         )
@@ -346,13 +344,16 @@ fun DatePickerRow(
             .padding(vertical = 8.dp)
     ) {
         Icon(
-            painter = painterResource(R.drawable.google_calendar_icon), // Make sure you have this icon
+            painter = painterResource(R.drawable.google_calendar_icon),
             contentDescription = label,
             modifier = Modifier.padding(end = 8.dp),
             tint = Color.Unspecified
         )
         Text(
-            text = "$label ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: "Select a date"}",
+            text = "$label ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: stringResource(
+                R.string.select_a_date
+            )
+            }",
             modifier = Modifier.weight(1f),
             color = colorResource(R.color.background),
             fontFamily = FontFamily(Font(R.font.alfa_slab))
@@ -381,12 +382,12 @@ fun DatePickerRow(
                         }
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -424,7 +425,7 @@ fun TimePickerRow(
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = "$label: ${formattedTime ?: "Select Time"}",
+            text = "$label: ${formattedTime ?: stringResource(R.string.select_time)}",
             modifier = Modifier.weight(1f),
             color = colorResource(R.color.background),
             fontFamily = FontFamily(Font(R.font.alfa_slab))
@@ -447,14 +448,13 @@ fun TimePickerRow(
                 }
 
                 onTimeSelected(Triple(hour12, selectedMinute, isPM))
-                showTimePicker = false  // Dismiss the time picker
+                showTimePicker = false
             },
             hour,
             minute,
-            false // Set to false for 12-hour format
+            false
         )
 
-        // Set dismiss listener to handle when user clicks outside the dialog or presses back
         timePickerDialog.setOnDismissListener {
             showTimePicker = false
         }
@@ -533,6 +533,9 @@ private fun AlarmItem(
     alarm: Alarm,
     onDelete: () -> Unit
 ) {
+    val hourIn12HourFormat = if (alarm.hour % 12 == 0) 12 else alarm.hour % 12
+    val amOrPm = if (alarm.hour < 12) "AM" else "PM"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -547,7 +550,7 @@ private fun AlarmItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${alarm.hour}:${alarm.minute.toString().padStart(2, '0')}",
+                    text = "${hourIn12HourFormat}:${alarm.minute.toString().padStart(2, '0')} $amOrPm",
                     style = MaterialTheme.typography.titleMedium
                 )
                 IconButton(onClick = onDelete) {

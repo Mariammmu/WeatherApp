@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">Climate</string>
     <string name="welcome_app">Welcome to Weather App</string>
-    <string name="celsius">°C</string>
+    <string name="c">°C</string>
+    <string name="f">°F</string>
+    <string name="k">°K</string>
     <string name="wind_speed">Wind speed</string>
     <string name="humidity">Humidity</string>
     <string name="wind">Wind</string>
@@ -31,11 +33,20 @@
     <string name="kelvin_k">Kelvin °K</string>
     <string name="fahrenheit_f">Fahrenheit °F</string>
     <string name="meter_sec">meter/sec</string>
-    <string name="mile_hour">mile/hour</string>
+    <string name="mile_hour">miles/hour</string>
     <string name="map">Map</string>
     <string name="gps">Gps</string>
     <string name="temp_unit">Temperature Unit\n\n</string>
     <string name="location">Location</string>
     <string name="wind_speed_unit">Wind Speed Unit</string>
     <string name="favorite">Favorite</string>
+    <string name="create_weather_alert">Create Weather Alert</string>
+    <string name="save">SAVE</string>
+    <string name="cancel">CANCEL</string>
+    <string name="pick_a_date">Pick a date</string>
+    <string name="start_time">Start Time</string>
+    <string name="end_time">End Time</string>
+    <string name="select_a_date">Select a date</string>
+    <string name="ok">OK</string>
+    <string name="select_time">Select Time</string>
 </resources>

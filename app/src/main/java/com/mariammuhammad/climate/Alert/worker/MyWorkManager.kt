@@ -1,5 +1,6 @@
 package com.mariammuhammad.climate.Alert.worker
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -24,6 +25,7 @@ class MyWorkManager(
 ) : CoroutineWorker(context, params) {
 
 
+    @SuppressLint("SuspiciousIndentation")
     override suspend fun doWork(): Result {
         val repo = WeatherRepositoryImpl(
             remoteDataSource = WeatherRemoteDataSource(RetrofitHelper.weatherService),

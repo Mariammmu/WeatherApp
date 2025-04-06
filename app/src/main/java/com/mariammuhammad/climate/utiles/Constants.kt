@@ -12,6 +12,5 @@ object Constants {
     const val WIND_SPEED_MILE = "ml"
     const val LATITUDE = "lat"
     const val LONGITUDE = "lon"
-    const val SPLASH_DISPLAY_LENGTH = 5000L
 
 }

@@ -14,7 +14,7 @@ class SettingsPrefs (override val settingsPrefs: SharedPreferences) : ISettingsP
         private val defaultLanguage = "device_lang"
 
         private val locationFinder = "location"
-        private val defaultLocation = "GPS"
+        private val defaultLocation = "gps"
 
         private val longitude = "longitude"
         private val defaultLongitude: Float = 0.0f

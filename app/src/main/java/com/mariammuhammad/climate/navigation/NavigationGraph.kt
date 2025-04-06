@@ -29,6 +29,7 @@ import com.mariammuhammad.climate.model.local.WeatherDataBase
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
+import com.mariammuhammad.climate.settings.data.ISettingsRepo
 import com.mariammuhammad.climate.settings.data.SettingsPrefs
 import com.mariammuhammad.climate.settings.data.SettingsRepo
 import com.mariammuhammad.climate.settings.view.SettingsScreen
@@ -74,6 +75,7 @@ fun NavigationGraph(navController: NavHostController) {
 //                val favLat = backStackEntry.arguments?.getString("favLat")?.toDouble() ?: 0.0
 //                val favLon = backStackEntry.arguments?.getString("favLon")?.toDouble() ?: 0.0
                 val data = backStackEntry.toRoute<NavigationRoute.HomeScreen>()
+
                 val viewModel: HomeViewModel = viewModel(
                     factory = WeatherFactory(
                         WeatherRepositoryImpl(
@@ -82,6 +84,10 @@ fun NavigationGraph(navController: NavHostController) {
                                 WeatherDataBase.getInstance(context).getFavoritesDao(),
                                 WeatherDataBase.getInstance(context).getWeatherDao(),
                                 WeatherDataBase.getInstance(context).getAlarmDao()
+                            )
+                        ), SettingsRepo(
+                            SettingsPrefs(
+                                context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
                             )
                         )
                     )
@@ -150,19 +156,22 @@ fun NavigationGraph(navController: NavHostController) {
                 WeatherAlarmScreen(
                     alertViewModel,
 
-                )
+                    )
             }
 
             composable<NavigationRoute.SettingsScreen> {
 
                 val settingsViewModel: SettingsViewModel = viewModel(
                     factory = SettingsViewModelFactory(
-                        SettingsRepo(SettingsPrefs(
-                            context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)))
+                        SettingsRepo(
+                            SettingsPrefs(
+                                context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+                            )
+                        )
                     )
                 )
 
-                SettingsScreen(settingsViewModel,) {
+                SettingsScreen(settingsViewModel) {
                     navController.navigate(NavigationRoute.MapScreen)
                 }
             }

@@ -46,132 +46,198 @@ import com.mariammuhammad.climate.utiles.Response
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
-    fun SettingsScreen(viewModel: SettingsViewModel, onMapOptionClick: () -> Unit) {
-        val context = LocalContext.current
-        val activity = context as Activity
-        val languageState by viewModel.language.collectAsState()
+fun SettingsScreen(viewModel: SettingsViewModel, onMapOptionClick: () -> Unit) {
+    val context = LocalContext.current
+    val activity = context as Activity
+    val languageState by viewModel.language.collectAsState()
     val temperatureUnitState = viewModel.temperatureUnit.collectAsState()
-   // val locationState by viewModel.locationFinder.collectAsState()
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorResource(R.color.background))
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Language selection card
-            when (languageState) {
-                is Response.Loading -> {
-                    CircularProgressIndicator()
-                }
-
-                is Response.Success -> {
-                    SettingsCard(
-                        title = stringResource(R.string.language),
-                        icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
-                        options = listOf(
-                            stringResource(R.string.arabic),
-                            stringResource(R.string.english), stringResource(R.string.default_lang)
-                        ),
-                        selectedOption = stringResource(R.string.english),
-                        onOptionSelected = { language ->
-                            LanguageUtils.changeLanguage(activity, getLanguageCode(language))
-                            viewModel.saveLanguage(language)
+    val locationState by viewModel.locationFinder.collectAsState()
+    val windSpeedUnitState by viewModel.windSpeedUnit.collectAsState()
 
 
-                        }
-                    )
-                }
-
-                is Response.Failure -> {
-                    // Show error state if needed
-                }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorResource(R.color.background))
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Language selection card
+        when (languageState) {
+            is Response.Loading -> {
+                CircularProgressIndicator()
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            is Response.Success -> {
+                val currentLang = (languageState as Response.Success<String>).data
+                val displayLang = when (currentLang) {
+                    LanguageUtils.ARABIC -> stringResource(R.string.arabic)
+                    LanguageUtils.ENGLISH -> stringResource(R.string.english)
+                    else -> stringResource(R.string.default_lang)
 
-            when (val state = temperatureUnitState.value) {
-                is Response.Loading -> {
-                    CircularProgressIndicator()
+
+
                 }
-
-                is Response.Success -> {
-                    val currentUnit = state.data
-                    val displayOptions = listOf(
-                        stringResource(R.string.celsius_c) to Constants.UNITS_CELSIUS,
-                        stringResource(R.string.fahrenheit_f) to Constants.UNITS_FAHRENHEIT,
-                        stringResource(R.string.kelvin_k) to Constants.UNITS_DEFAULT
-                    )
-
-                    val currentDisplay = displayOptions.find { it.second == currentUnit }?.first
-                        ?: stringResource(R.string.celsius_c)
-
-                    SettingsCard(
-                        title = stringResource(R.string.temp_unit),
-                        icon = painterResource(id = R.drawable.speedometer_color_icon),
-                        options = displayOptions.map { it.first },
-                        selectedOption = currentDisplay,
-                        onOptionSelected = { selectedDisplay ->
-
-                            val selectedUnit =
-                                displayOptions.find { it.first == selectedDisplay }?.second
-                                    ?: Constants.UNITS_CELSIUS
-                            viewModel.saveTemperatureUnit(selectedUnit)
+                SettingsCard(
+                    title = stringResource(R.string.language),
+                    icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
+                    options = listOf(
+                        stringResource(R.string.arabic),
+                        stringResource(R.string.english),
+                        stringResource(R.string.default_lang)
+                    ),
+                    selectedOption = displayLang, //stringResource(R.string.english),
+                    onOptionSelected = { language ->
+                        val langCode= when(language){
+                            "Arabic" -> LanguageUtils.ARABIC //stringResource(R.string.arabic)
+                            "English" -> LanguageUtils.ENGLISH
+                            else -> "Default"
                         }
-                    )
-                }
-
-                is Response.Failure -> {
-                    Text("Error loading temperature settings", color = Color.Red)
-                }
-            }
+                        //LanguageUtils.changeLanguage(activity, getLanguageCode(language))
+                        LanguageUtils.changeLanguage(activity, langCode)
+                        viewModel.saveLanguage(langCode)
 
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            SettingsCard(
-                title = stringResource(R.string.location),
-                icon = painterResource(id = R.drawable.google_map_icon),
-                options = listOf(stringResource(R.string.gps), stringResource(R.string.map)),
-                selectedOption = stringResource(R.string.gps),//state.locationMethod,
-                onOptionSelected = {
-                    if(it== "Map")
-                    {
-                        onMapOptionClick.invoke()
                     }
-                }//{ viewModel.setLocationMethod(it) }
-            )
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            is Response.Failure -> {
 
-            SettingsCard(
-                title = stringResource(R.string.wind_speed_unit),
-                icon = painterResource(id = R.drawable.cloud_wind_color_icon),
-                options = listOf(stringResource(R.string.meter_sec),
-                    stringResource(R.string.mile_hour)),
-                selectedOption = "meter/sec",//state.windSpeedUnit,
-                onOptionSelected = {}//{ viewModel.setWindSpeedUnit(it) }
-            )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (val state = temperatureUnitState.value) {
+            is Response.Loading -> {
+                CircularProgressIndicator()
+            }
+
+            is Response.Success -> {
+                val currentUnit = state.data
+                val displayOptions = listOf(
+                    stringResource(R.string.celsius_c) to Constants.UNITS_CELSIUS,
+                    stringResource(R.string.fahrenheit_f) to Constants.UNITS_FAHRENHEIT,
+                    stringResource(R.string.kelvin_k) to Constants.UNITS_DEFAULT
+                )
+
+                val currentDisplay = displayOptions.find { it.second == currentUnit }?.first
+                    ?: stringResource(R.string.celsius_c)
+
+                SettingsCard(
+                    title = stringResource(R.string.temp_unit),
+                    icon = painterResource(id = R.drawable.speedometer_color_icon),
+                    options = displayOptions.map { it.first },
+                    selectedOption = currentDisplay,
+                    onOptionSelected = { selectedDisplay ->
+
+                        val selectedUnit =
+                            displayOptions.find { it.first == selectedDisplay }?.second
+                                ?: Constants.UNITS_CELSIUS
+                        viewModel.saveTemperatureUnit(selectedUnit)
+                    }
+                )
+            }
+
+            is Response.Failure -> {
+                Text("Error loading temperature settings", color = Color.Red)
+            }
+        }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (locationState) {
+            is Response.Loading -> {
+                CircularProgressIndicator()
+            }
+
+            is Response.Success -> {
+                val currentMethod = (locationState as Response.Success<String>).data
+                val displayMethod = when (currentMethod.lowercase()) {
+                    "gps" -> stringResource(R.string.gps)
+                    "map" -> stringResource(R.string.map)
+                    else -> stringResource(R.string.gps)
+                }
+
+                SettingsCard(
+                    title = stringResource(R.string.location),
+                    icon = painterResource(id = R.drawable.google_map_icon),
+                    options = listOf(
+                        stringResource(R.string.gps),
+                        stringResource(R.string.map)
+                    ),
+                    selectedOption = displayMethod,
+                    onOptionSelected = { method ->
+                        if (method == "Map") { // stringResource(R.string.map)) {
+                            onMapOptionClick()
+                        } else {
+                            viewModel.saveLocationFinder("gps")
+                        }
+                    }
+                )
+            }
+
+            is Response.Failure -> {
+                Text("Error loading location settings", color = Color.Red)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (windSpeedUnitState) {
+            is Response.Loading -> {
+                CircularProgressIndicator()
+            }
+
+            is Response.Success -> {
+                val currentUnit = (windSpeedUnitState as Response.Success<String>).data
+                val displayOptions = listOf(
+                    stringResource(R.string.meter_sec) to "m/s",
+                    stringResource(R.string.mile_hour) to "mph"
+                )
+
+                val currentDisplay = displayOptions.find { it.second == currentUnit }?.first
+                    ?: stringResource(R.string.meter_sec)
+
+                SettingsCard(
+                    title = stringResource(R.string.wind_speed_unit),
+                    icon = painterResource(id = R.drawable.cloud_wind_color_icon),
+                    options = displayOptions.map { it.first },
+                    selectedOption = currentDisplay,
+                    onOptionSelected = { selectedDisplay ->
+                        val selectedUnit =
+                            displayOptions.find { it.first == selectedDisplay }?.second
+                                ?: "m/s"
+                        viewModel.saveWindSpeedUnit(selectedUnit)
+                    }
+                )
+            }
+
+            is Response.Failure -> {
+                Text("Error loading wind speed settings", color = Color.Red)
+            }
         }
     }
-
-private fun getLanguageCode( language: String): String{
-    return when{
-
-        language == "Arabic" -> {
-            LanguageUtils.ARABIC
-        }
-
-        language == "English" -> {
-            LanguageUtils.ENGLISH
-        }
-        else -> "Default"
-    }
-
-
 }
+
+//private fun getLanguageCode(language: String): String {
+//    return when {
+//
+//        language == "Arabic" -> {
+//            LanguageUtils.ARABIC
+//        }
+//
+//        language == "English" -> {
+//            LanguageUtils.ENGLISH
+//        }
+//
+//        else -> "Default"
+//    }
+//
+//
+//}
 
 @Composable
 private fun SettingsCard(
@@ -179,7 +245,7 @@ private fun SettingsCard(
     icon: Painter,
     options: List<String>,
     selectedOption: String,
-     onOptionSelected: (String) -> Unit
+    onOptionSelected: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -187,7 +253,7 @@ private fun SettingsCard(
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Title with icon
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -209,7 +275,6 @@ private fun SettingsCard(
                 )
             }
 
-            // Radio options
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 // horizontalArrangement = Arrangement.SpaceEvenly

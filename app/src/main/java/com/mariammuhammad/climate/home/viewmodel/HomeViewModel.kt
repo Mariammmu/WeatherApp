@@ -8,17 +8,19 @@ import androidx.lifecycle.viewModelScope
 import com.mariammuhammad.climate.model.WeatherRepository
 import com.mariammuhammad.climate.model.data.CurrentWeather
 import com.mariammuhammad.climate.model.data.NextDaysWeather
+import com.mariammuhammad.climate.settings.data.ISettingsRepo
 import com.mariammuhammad.climate.utiles.NetworkManager
 import com.mariammuhammad.climate.utiles.Response
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
-class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
+class HomeViewModel(val repo: WeatherRepository, val settingsRepo: ISettingsRepo) : ViewModel() {
 
     private val _currentWeather =
         MutableStateFlow<Response<CurrentWeather>>(Response.Loading)
@@ -36,6 +38,26 @@ class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
 
     private val _showMessage = MutableSharedFlow<Boolean>() //Flow<String?>(null) event action
     val showMessage: SharedFlow<Boolean?> = _showMessage
+
+    private val _tempUnit = MutableStateFlow("")
+    val tempUnit = _tempUnit.asStateFlow()
+
+    private val _language = MutableStateFlow("")
+    val language = _language.asStateFlow()
+
+    private val _windUnit = MutableStateFlow("")
+    val windUnit = _windUnit.asStateFlow()
+
+
+    private val _locationFinder = MutableStateFlow("")
+    val locationFinder = _locationFinder.asStateFlow()
+
+    private val _savedLatitude = MutableStateFlow(0f)
+    val savedLatitude = _savedLatitude.asStateFlow()
+
+    private val _savedLongitude = MutableStateFlow(0f)
+    val savedLongitude = _savedLongitude.asStateFlow()
+
 
     private lateinit var networkManager: NetworkManager
 
@@ -186,23 +208,55 @@ fun getStoredNextDaysWeather() {
     }
 }
 
-fun insertNextDaysWeather(weatherResponse: NextDaysWeather) {
-    viewModelScope.launch {
-        try {
-            repo.insertNextDaysWeather(weatherResponse)
-        } catch (th: Throwable) {
-            _storedNextDaysWeather.value = Response.Failure(Throwable("Error inserting weather data"))
-        }
+    fun getSavedSettings() {
+        getMeasurementSystem()
+        getLanguage()
+        getLocationFinder()
+        getSavedLocation()
+        getWindUnit()
     }
 
-}
+    private fun getMeasurementSystem() {
+        _tempUnit.value = settingsRepo.getTemperatureUnit()
+    }
+
+    private fun getWindUnit() {
+        _windUnit.value = settingsRepo.getWindSpeedUnit()
+    }
+
+
+    private fun getLanguage() {
+        _language.value = settingsRepo.getLanguage()
+    }
+
+    private fun getLocationFinder() {
+        _locationFinder.value = settingsRepo.getLocationFinder()
+    }
+
+
+    private fun getSavedLocation() {
+        _savedLatitude.value = settingsRepo.getLatitude()
+        _savedLongitude.value = settingsRepo.getLongitude()
+    }
+
+//fun insertNextDaysWeather(weatherResponse: NextDaysWeather) {
+//    viewModelScope.launch {
+//        try {
+//            repo.insertNextDaysWeather(weatherResponse)
+//        } catch (th: Throwable) {
+//            _storedNextDaysWeather.value = Response.Failure(Throwable("Error inserting weather data"))
+//        }
+//    }
+
 }
 
 
-class WeatherFactory(private val _repo: WeatherRepository) : ViewModelProvider.Factory {
+class WeatherFactory(private val _repo: WeatherRepository,
+                     private val settingRepo: ISettingsRepo
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            return HomeViewModel(_repo) as T
+            return HomeViewModel(_repo,settingRepo) as T
         } else {
             throw IllegalArgumentException("ViewModel class not found")
         }

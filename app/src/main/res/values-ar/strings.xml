@@ -2,7 +2,9 @@
 <resources>
     <string name="app_name">المناخ</string>
     <string name="welcome_app">مرحبًا بك في تطبيق الطقس</string>
-    <string name="celsius">°م</string>
+    <string name="c">°م</string>
+    <string name="f">°ف</string>
+    <string name="k">°ك</string>
     <string name="wind_speed">سرعة الرياح</string>
     <string name="humidity">الرطوبة</string>
     <string name="wind">الرياح</string>
@@ -39,7 +41,13 @@
     <string name="location">الموقع</string>
     <string name="wind_speed_unit">وحدة سرعة الرياح</string>
     <string name="favorite">المفضلة</string>
-
-
-
+    <string name="create_weather_alert">إنشاء تنبيه الطقس</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="pick_a_date">اختر تاريخًا</string>
+    <string name="start_time">وقت البدء</string>
+    <string name="end_time">وقت الانتهاء</string>
+    <string name="select_a_date">اختر تاريخًا</string>
+    <string name="ok">موافق</string>
+    <string name="select_time">اختر الوقت</string>
 </resources>
