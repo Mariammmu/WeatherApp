@@ -94,8 +94,8 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
     val locationPermissionManager = LocationPermissionManager(context)
-    val storedCurrentWeather by homeViewModel.storedCurrentWeather.collectAsState()
-    val storedNextDaysWeather by homeViewModel.storedNextDaysWeather.collectAsState()
+//    val storedCurrentWeather by homeViewModel.storedCurrentWeather.collectAsState()
+//    val storedNextDaysWeather by homeViewModel.storedNextDaysWeather.collectAsState()
     val settingsPrefs = remember {
         SettingsPrefs(context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE))}
 

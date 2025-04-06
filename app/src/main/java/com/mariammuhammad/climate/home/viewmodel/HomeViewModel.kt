@@ -170,29 +170,29 @@ class HomeViewModel(val repo: WeatherRepository, val settingsRepo: ISettingsRepo
         }
     }
 
-    fun getStoredCurrentWeather() {
-        viewModelScope.launch {
-            repo.getAllCurrentWeatherFromRoom().collect { response ->
-                try {
-                    _storedCurrentWeather.value = Response.Success(response)
-                } catch (th: Throwable) {
-                    _storedCurrentWeather.value =
-                        Response.Failure(Throwable("Error retrieving stored weather"))
-                }
-            }
-        }
-    }
-
-    fun insertCurrentWeather(currentWeather: CurrentWeather) {
-        viewModelScope.launch {
-            try {
-                repo.insertCurrentWeather(currentWeather)
-            } catch (th: Throwable) {
-                _storedCurrentWeather.value = Response.Failure(Throwable("Error inserting weather data"))
-            }
-        }
-
-    }
+//    fun getStoredCurrentWeather() {
+//        viewModelScope.launch {
+//            repo.getAllCurrentWeatherFromRoom().collect { response ->
+//                try {
+//                    _storedCurrentWeather.value = Response.Success(response)
+//                } catch (th: Throwable) {
+//                    _storedCurrentWeather.value =
+//                        Response.Failure(Throwable("Error retrieving stored weather"))
+//                }
+//            }
+//        }
+//    }
+//
+//    fun insertCurrentWeather(currentWeather: CurrentWeather) {
+//        viewModelScope.launch {
+//            try {
+//                repo.insertCurrentWeather(currentWeather)
+//            } catch (th: Throwable) {
+//                _storedCurrentWeather.value = Response.Failure(Throwable("Error inserting weather data"))
+//            }
+//        }
+//
+//    }
 
 
 fun getStoredNextDaysWeather() {

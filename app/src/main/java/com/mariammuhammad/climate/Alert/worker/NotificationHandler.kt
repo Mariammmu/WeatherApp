@@ -32,10 +32,8 @@ class NotificationHandler(private val context: Context) {
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     fun createNotification(body: String?, title: String?) {
-        // Create notification channel
         createNotificationChannel()
 
-        // Create pending intents for actions
         val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = "SNOOZE_ACTION"
             putExtra("notification_id", NOTIFICATION_ID)
@@ -61,7 +59,7 @@ class NotificationHandler(private val context: Context) {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.icon_xhdpi)
             .setContentTitle(title)
             .setContentText(body)
             .setSound(soundUri)

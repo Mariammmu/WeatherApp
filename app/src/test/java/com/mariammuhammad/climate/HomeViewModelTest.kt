@@ -1,4 +1,5 @@
 package com.mariammuhammad.climate
+import android.util.Log
 import com.mariammuhammad.climate.model.WeatherRepository
 import com.mariammuhammad.climate.model.data.CurrentWeather
 import com.mariammuhammad.climate.model.data.NextDaysWeather
@@ -14,8 +15,10 @@ import com.mariammuhammad.climate.model.data.Rain
 import com.mariammuhammad.climate.model.data.Sys
 import com.mariammuhammad.climate.model.data.Weather
 import com.mariammuhammad.climate.model.data.Wind
+import com.mariammuhammad.climate.settings.data.ISettingsRepo
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
@@ -31,12 +34,13 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
+
     private lateinit var homeViewModel: HomeViewModel
     private lateinit var weatherRepository: WeatherRepository
+    private lateinit var settingsRepo: ISettingsRepo
     private val testDispatcher = StandardTestDispatcher()
 
     val mockMain = Main(
@@ -89,13 +93,23 @@ class HomeViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
+        // Initialize all mocks
         weatherRepository = mockk()
+        settingsRepo = mockk()  // Add this line to initialize the mock
 
-        homeViewModel = HomeViewModel(weatherRepository)
+        // Provide default mock behavior for settingsRepo if needed
+        every { settingsRepo.getTemperatureUnit() } returns "metric"
+        every { settingsRepo.getWindSpeedUnit() } returns "m/s"
+        every { settingsRepo.getLanguage() } returns "en"
+        every { settingsRepo.getLocationFinder() } returns "gps"
+        every { settingsRepo.getLatitude() } returns 0f
+        every { settingsRepo.getLongitude() } returns 0f
+
+        homeViewModel = HomeViewModel(weatherRepository, settingsRepo)
     }
 
     @After
-    fun tearDown() {
+    fun close() {
         Dispatchers.resetMain()
     }
 
@@ -114,7 +128,7 @@ class HomeViewModelTest {
         assertEquals(mockCurrentWeather, (result as Response.Success).data)
         coVerify { weatherRepository.getWeatherForecast(52.5200, 13.4050, "metric", "en") }
     }
-    
+
 
     @Test
     fun `get5DaysWeather should emit Success when repository succeeds`() = runTest {
