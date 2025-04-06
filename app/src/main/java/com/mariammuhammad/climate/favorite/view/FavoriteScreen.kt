@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -175,7 +176,7 @@ fun FavCityItem(city: City, favViewModel: FavoriteViewModel, onCardClick: (Doubl
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Favorite",
+                    text = stringResource(R.string.favorite),
                     color = Color.White,
                     fontSize = 14.sp
                 )

@@ -1,9 +1,8 @@
 package com.mariammuhammad.climate.settings.view
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,90 +13,164 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.settings.viewmodel.SettingsViewModel
+import com.mariammuhammad.climate.utiles.Constants
+import com.mariammuhammad.climate.utiles.LanguageUtils
+import com.mariammuhammad.climate.utiles.Response
 
+
+@SuppressLint("SuspiciousIndentation")
 @Composable
-fun SettingsScreen() {
-    // val state by viewModel.state.collectAsState()
+    fun SettingsScreen(viewModel: SettingsViewModel, onMapOptionClick: () -> Unit) {
+        val context = LocalContext.current
+        val activity = context as Activity
+        val languageState by viewModel.language.collectAsState()
+    val temperatureUnitState = viewModel.temperatureUnit.collectAsState()
+   // val locationState by viewModel.locationFinder.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorResource(R.color.background))
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        SettingsCard(
-            title = stringResource(R.string.language),
-            icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
-            options = listOf("Arabic", "English", "Default"),
-            selectedOption = "English",//state.language,
-            //onOptionSelected = //{ viewModel.setLanguage(it) }
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorResource(R.color.background))
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Language selection card
+            when (languageState) {
+                is Response.Loading -> {
+                    CircularProgressIndicator()
+                }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                is Response.Success -> {
+                    SettingsCard(
+                        title = stringResource(R.string.language),
+                        icon = painterResource(id = R.drawable.language_translate_bubbles_icon),
+                        options = listOf(
+                            stringResource(R.string.arabic),
+                            stringResource(R.string.english), stringResource(R.string.default_lang)
+                        ),
+                        selectedOption = stringResource(R.string.english),
+                        onOptionSelected = { language ->
+                            LanguageUtils.changeLanguage(activity, getLanguageCode(language))
+                            viewModel.saveLanguage(language)
 
-        SettingsCard(
-            title = "Temp Unit",
-            icon = painterResource(id = R.drawable.speedometer_color_icon),
-            options = listOf("Celsius °C", "Kelvin °K", "Fahrenheit °F"),
-            selectedOption = "Celsius °C",//state.tempUnit,
-            // onOptionSelected = { viewModel.setTempUnit(it) }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    )
+                }
 
-        SettingsCard(
-            title = "Location",
-            icon = painterResource(id = R.drawable.google_map_icon),
-            options = listOf("Gps", "Map"),
-            selectedOption = "Gps",//state.locationMethod,
-            // onOptionSelected = { viewModel.setLocationMethod(it) }
-        )
+                is Response.Failure -> {
+                    // Show error state if needed
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        SettingsCard(
-            title = "Wind Speed Unit",
-            icon = painterResource(id = R.drawable.cloud_wind_color_icon),
-            options = listOf("meter/sec", "mile/hour"),
-            selectedOption = "meter/sec",//state.windSpeedUnit,
-            // onOptionSelected = { viewModel.setWindSpeedUnit(it) }
-        )
+            when (val state = temperatureUnitState.value) {
+                is Response.Loading -> {
+                    CircularProgressIndicator()
+                }
+
+                is Response.Success -> {
+                    val currentUnit = state.data
+                    val displayOptions = listOf(
+                        stringResource(R.string.celsius_c) to Constants.UNITS_CELSIUS,
+                        stringResource(R.string.fahrenheit_f) to Constants.UNITS_FAHRENHEIT,
+                        stringResource(R.string.kelvin_k) to Constants.UNITS_DEFAULT
+                    )
+
+                    val currentDisplay = displayOptions.find { it.second == currentUnit }?.first
+                        ?: stringResource(R.string.celsius_c)
+
+                    SettingsCard(
+                        title = stringResource(R.string.temp_unit),
+                        icon = painterResource(id = R.drawable.speedometer_color_icon),
+                        options = displayOptions.map { it.first },
+                        selectedOption = currentDisplay,
+                        onOptionSelected = { selectedDisplay ->
+
+                            val selectedUnit =
+                                displayOptions.find { it.first == selectedDisplay }?.second
+                                    ?: Constants.UNITS_CELSIUS
+                            viewModel.saveTemperatureUnit(selectedUnit)
+                        }
+                    )
+                }
+
+                is Response.Failure -> {
+                    Text("Error loading temperature settings", color = Color.Red)
+                }
+            }
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+
+            SettingsCard(
+                title = stringResource(R.string.location),
+                icon = painterResource(id = R.drawable.google_map_icon),
+                options = listOf(stringResource(R.string.gps), stringResource(R.string.map)),
+                selectedOption = stringResource(R.string.gps),//state.locationMethod,
+                onOptionSelected = {
+                    if(it== "Map")
+                    {
+                        onMapOptionClick.invoke()
+                    }
+                }//{ viewModel.setLocationMethod(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SettingsCard(
+                title = stringResource(R.string.wind_speed_unit),
+                icon = painterResource(id = R.drawable.cloud_wind_color_icon),
+                options = listOf(stringResource(R.string.meter_sec),
+                    stringResource(R.string.mile_hour)),
+                selectedOption = "meter/sec",//state.windSpeedUnit,
+                onOptionSelected = {}//{ viewModel.setWindSpeedUnit(it) }
+            )
+        }
     }
+
+private fun getLanguageCode( language: String): String{
+    return when{
+
+        language == "Arabic" -> {
+            LanguageUtils.ARABIC
+        }
+
+        language == "English" -> {
+            LanguageUtils.ENGLISH
+        }
+        else -> "Default"
+    }
+
+
 }
 
 @Composable
@@ -106,7 +179,7 @@ private fun SettingsCard(
     icon: Painter,
     options: List<String>,
     selectedOption: String,
-    // onOptionSelected: (String) -> Unit
+     onOptionSelected: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -149,7 +222,7 @@ private fun SettingsCard(
                     ) {
                         RadioButton(
                             selected = option == selectedOption,
-                            onClick = {},//{ onOptionSelected(option) },
+                            onClick = { onOptionSelected(option) },
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = colorResource(R.color.dark_purple),
                                 unselectedColor = Color.Gray
@@ -167,122 +240,3 @@ private fun SettingsCard(
         }
     }
 }
-
-
-//data class SettingsState(
-//    val language: String = "English",
-//    val tempUnit: String = "Celsius °C",
-//    val locationMethod: String = "Gps",
-//    val windSpeedUnit: String = "meter/sec",
-//    val isInternetConnected: Boolean = true
-//)
-//    @Composable
-//    fun SettingsScreen() {
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(colorResource(R.color.background))
-//                .padding(16.dp)
-//        ) {
-//            SettingOption(
-//                title = "Language",
-//                icon = Icons.Default.Done,
-//                options = listOf("Arabic", "English", "Default"),
-//                selectedOption = "English"
-//            )
-//
-//            SettingOption(
-//                title = "Temp Unit",
-//                //Question
-//                icon = Icons.Default.ArrowDropDown,
-//                options = listOf("Celsius °C", "Kelvin °K", "Fahrenheit °F"),
-//                selectedOption = "Celsius °C"
-//            )
-//
-//            SettingOption(
-//                title = "Location",
-//                icon = Icons.Default.LocationOn,
-//                options = listOf("GPS", "Map"),
-//                selectedOption = "Map"
-//            )
-//
-//            SettingOption(
-//                title = "Wind Speed Unit",
-////                icon= Icon(
-////                    painter = painterResource(id = R.drawable.ic_add_location), // Use your custom vector image here
-////                    contentDescription = "Add location")
-//                Icons.Default.Place,
-//                options = listOf("meter/sec", "mile/hour"),
-//                selectedOption = "meter/sec"
-//            )
-//        }
-//    }
-//
-//    @Composable
-//    fun SettingOption(title: String, icon: ImageVector, options: List<String>, selectedOption: String) {
-//        Card(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(vertical = 8.dp),
-//            colors = CardDefaults.cardColors(containerColor = colorResource(R.color.violet))
-//        ) {
-//            Column(modifier = Modifier.padding(16.dp)) {
-//                Row(verticalAlignment = Alignment.CenterVertically) {
-//                    Icon(imageVector = icon, contentDescription = title,
-//                        tint = colorResource(R.color.off_white))
-//
-//                    Spacer(modifier = Modifier.width(8.dp))
-//
-//                    Text(text = title, color = colorResource(R.color.off_white),
-//                        fontSize = 18.sp,
-//                        fontWeight = FontWeight.Bold)
-//                }
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                options.forEach { option ->
-//                    Row(
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .clickable { /* Handle selection */ }
-//                            .padding(vertical = 4.dp)
-//                    ) {
-//                        RadioButton(
-//                            selected = (option == selectedOption),
-//                            onClick = { /* Handle selection */ },
-//                            colors = RadioButtonDefaults.colors(selectedColor = colorResource(R.color.icy))
-//                        )
-//                        Text(text = option, color = colorResource(R.color.off_white), fontSize = 16.sp)
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-/*
-class SettingsViewModel : ViewModel() {
-    private val _state = mutableStateOf(SettingsState())
-    val state: State<SettingsState> = _state
-
-    fun setLanguage(language: String) {
-        _state.value = _state.value.copy(language = language)
-    }
-
-    fun setTempUnit(unit: String) {
-        _state.value = _state.value.copy(tempUnit = unit)
-    }
-
-    fun setLocationMethod(method: String) {
-        _state.value = _state.value.copy(locationMethod = method)
-    }
-
-    fun setWindSpeedUnit(unit: String) {
-        _state.value = _state.value.copy(windSpeedUnit = unit)
-    }
-
-    fun setInternetStatus(connected: Boolean) {
-        _state.value = _state.value.copy(isInternetConnected = connected)
-    }
-}
- */

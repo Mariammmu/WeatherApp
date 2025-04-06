@@ -1,6 +1,8 @@
 package com.mariammuhammad.climate.navigation
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -27,7 +29,11 @@ import com.mariammuhammad.climate.model.local.WeatherDataBase
 import com.mariammuhammad.climate.model.local.WeatherLocalDataSource
 import com.mariammuhammad.climate.model.remote.RetrofitHelper.weatherService
 import com.mariammuhammad.climate.model.remote.WeatherRemoteDataSource
+import com.mariammuhammad.climate.settings.data.SettingsPrefs
+import com.mariammuhammad.climate.settings.data.SettingsRepo
 import com.mariammuhammad.climate.settings.view.SettingsScreen
+import com.mariammuhammad.climate.settings.viewmodel.SettingsViewModel
+import com.mariammuhammad.climate.settings.viewmodel.SettingsViewModelFactory
 import com.mariammuhammad.climate.view.SplashScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -148,7 +154,17 @@ fun NavigationGraph(navController: NavHostController) {
             }
 
             composable<NavigationRoute.SettingsScreen> {
-                SettingsScreen()
+
+                val settingsViewModel: SettingsViewModel = viewModel(
+                    factory = SettingsViewModelFactory(
+                        SettingsRepo(SettingsPrefs(
+                            context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)))
+                    )
+                )
+
+                SettingsScreen(settingsViewModel,) {
+                    navController.navigate(NavigationRoute.MapScreen)
+                }
             }
         }
     }

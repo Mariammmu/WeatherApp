@@ -27,24 +27,6 @@ class NotificationHandler (private val context: Context){
     fun createNotification(body: String?, title: String?) {
         // Create notification channel if needed (Android 8+)
 
-        /*
-        val soundAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = CHANNEL_ID
-            val descriptionText = "description"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
-            val notificationManager: NotificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-         */
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(

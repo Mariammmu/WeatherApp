@@ -135,9 +135,9 @@ fun WeatherAlarmScreen(
                     .setConstraints(constraints)
                     .build()
                 WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
-                showAddAlarmDialog = false
 
             }
+            showAddAlarmDialog = false
 
 
         },

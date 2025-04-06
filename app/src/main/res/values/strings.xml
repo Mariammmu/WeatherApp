@@ -24,4 +24,18 @@
     <string name="save_location">Add to Favorites</string>
     <string name="language">Language</string>
     <string name="empty_alarms">You don\'t have any alarms</string>
+    <string name="arabic">Arabic</string>
+    <string name="english">English</string>
+    <string name="default_lang">Default</string>
+    <string name="celsius_c">Celsius °C</string>
+    <string name="kelvin_k">Kelvin °K</string>
+    <string name="fahrenheit_f">Fahrenheit °F</string>
+    <string name="meter_sec">meter/sec</string>
+    <string name="mile_hour">mile/hour</string>
+    <string name="map">Map</string>
+    <string name="gps">Gps</string>
+    <string name="temp_unit">Temperature Unit\n\n</string>
+    <string name="location">Location</string>
+    <string name="wind_speed_unit">Wind Speed Unit</string>
+    <string name="favorite">Favorite</string>
 </resources>

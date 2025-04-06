@@ -10,7 +10,9 @@ import com.mariammuhammad.climate.model.data.CurrentWeather
 import com.mariammuhammad.climate.model.data.NextDaysWeather
 import com.mariammuhammad.climate.utiles.NetworkManager
 import com.mariammuhammad.climate.utiles.Response
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -24,16 +26,16 @@ class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
 
 
     private val _nextDaysWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
-    val nextDaysWeather: StateFlow<Response<NextDaysWeather>> = _nextDaysWeather
+    val nextDaysWeather: StateFlow<Response<NextDaysWeather>> = _nextDaysWeather ////toast/snackbar/
 
     private val _storedCurrentWeather = MutableStateFlow<Response<CurrentWeather>>(Response.Loading)
-    val storedWeather: StateFlow<Response<CurrentWeather>> = _storedCurrentWeather
+    val storedCurrentWeather: StateFlow<Response<CurrentWeather>> = _storedCurrentWeather
 
     private val _storedNextDaysWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
     val storedNextDaysWeather: StateFlow<Response<NextDaysWeather>> = _storedNextDaysWeather
 
-    private val _showMessage = MutableStateFlow<String?>(null)
-    val showMessage: StateFlow<String?> = _showMessage
+    private val _showMessage = MutableSharedFlow<Boolean>() //Flow<String?>(null) event action
+    val showMessage: SharedFlow<Boolean?> = _showMessage
 
     private lateinit var networkManager: NetworkManager
 
@@ -41,7 +43,6 @@ class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
         networkManager = NetworkManager(context)
     }
 
-    // Method 1: Load data with network connectivity check
     fun loadData(lat: Double, lon: Double, units: String, lang: String) {
         if (!::networkManager.isInitialized) {
             _currentWeather.value = Response.Failure(Throwable("ViewModel not initialized"))
@@ -55,55 +56,51 @@ class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
 
             if (networkManager.isNetworkAvailable()) {
                 try {
-                    // data from network
                     val current = repo.getWeatherForecast(lat, lon, units, lang).first()
                     val forecast = repo.get5DaysEvery3Hours(lat, lon, units, lang).first()
 
-                    // Update UI
+                    // Update UI with fresh data
                     _currentWeather.value = Response.Success(current)
                     _nextDaysWeather.value = Response.Success(forecast)
 
-                    // Cache the data
-                    cacheData(current, forecast)
+                    viewModelScope.launch {
+                        try {
+                            repo.insertCurrentWeather(current)
+                            repo.insertNextDaysWeather(forecast)
+                        } catch (e: Exception) {
+                            Log.e("Caching", "Failed to cache data", e)
+                        }
+                    }
                 } catch (e: Exception) {
-                    _showMessage.value = "Network error, loading cached data"
-                    loadCachedData()
+                    _showMessage.emit(true)
+
+                    //_showMessage.value = "Network error, showing cached data"
+                    loadCachedData(lat, lon)
                 }
-            } else {
-                _showMessage.value = "Offline, loading cached data"
-                loadCachedData()
+            }
+            else {
+                _showMessage.emit(true)
+                        // "No internet connection, showing cached data"
+                loadCachedData(lat, lon)
             }
         }
     }
 
-    private fun cacheData(current: CurrentWeather, forecast: NextDaysWeather) {
-        viewModelScope.launch {
-            try {
-                repo.insertCurrentWeather(current)
-                repo.insertNextDaysWeather(forecast)
-            } catch (e: Exception) {
-                Log.e("Caching", "Failed to cache data", e)
-            }
-        }
-    }
-
-    // Helper method to load cached data
-    private suspend fun loadCachedData() {
+    private suspend fun loadCachedData(lat: Double, lon: Double) {
         try {
-            // Get the latest cached data
             val cachedCurrent = repo.getAllCurrentWeatherFromRoom().firstOrNull()
             val cachedForecast = repo.getNextDaysWeatherFromRoom().firstOrNull()
 
             cachedCurrent?.let {
                 _currentWeather.value = Response.Success(it)
             } ?: run {
-                _currentWeather.value = Response.Failure(Throwable("No cached current weather"))
+                _currentWeather.value = Response.Failure(Throwable("No cached data available"))
             }
 
             cachedForecast?.let {
                 _nextDaysWeather.value = Response.Success(it)
             } ?: run {
-                _nextDaysWeather.value = Response.Failure(Throwable("No cached forecast"))
+                _nextDaysWeather.value = Response.Failure(Throwable("No cached forecast available"))
             }
         } catch (e: Exception) {
             _currentWeather.value = Response.Failure(e)
@@ -111,58 +108,10 @@ class HomeViewModel(val repo: WeatherRepository) : ViewModel() {
         }
     }
 
-    fun messageShown() {
-        _showMessage.value = null
-    }
+//    fun messageShown() {
+//        _showMessage.value = null
+//    }
 
-//    fun loadWeather(lat: Double, lon: Double, units: String, lang: String) {
-//        if (!::networkManager.isInitialized) {
-//            _nextDaysWeather.value = Response.Failure(Throwable("ViewModel not initialized"))
-//            return
-//        }
-//
-//        viewModelScope.launch {
-//            _nextDaysWeather.value = Response.Loading
-//
-//            if (networkManager.isNetworkAvailable()) {
-//                try {
-//                    Log.i("TAG", "loadWeather: internet avail  ")
-//
-//                    repo.get5DaysEvery3Hours(lat, lon, units, lang).collect { response ->
-//                        _nextDaysWeather.value = Response.Success(response)
-//                        repo.insertCurrentWeather(response)
-//
-//                    }
-//                } catch (e: Exception) {
-//                    Log.i("TAG", "loadWeather: Internet error ")
-//                    e.printStackTrace()
-//                    loadFromCache()
-//                    _showMessage.value = "Using cached data (API failed)"
-//                }
-//            } else {
-//                Log.i("TAG", "loadWeather: No internet  ")
-//                loadFromCache()
-//                _showMessage.value = "No internet connection - showing cached data"
-//            }
-//        }
-//    }
-//
-//    private fun loadFromCache() {
-//        viewModelScope.launch (Dispatchers.IO) {
-//            try {
-//                Log.i("TAG", "loadFromCache: get ")
-//                repo.getAllCurrentWeatherFromRoom().collect { cachedData ->
-//                        Log.i("TAG", "loadFromCache: ${cachedData}")
-//                        _nextDaysWeather.value = Response.Success(cachedData)
-//                }
-//            } catch (e: Exception) {
-//                Log.i("TAG", "loadFromCache: error retrieving data ")
-//                e.printStackTrace()
-//                    _nextDaysWeather.value = Response.Failure(e)
-//
-//            }
-//        }
-//    }
 
     fun getCurrentWeather(lat: Double, lon: Double, units: String, lang: String) {
         //Log.i("TAG", "getCurrentWeather: ")

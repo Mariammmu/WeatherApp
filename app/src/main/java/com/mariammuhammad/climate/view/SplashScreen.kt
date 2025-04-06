@@ -56,7 +56,7 @@ fun SplashScreen(
 //    }
 
     LaunchedEffect(key1 = Unit) {
-        delay(10000L)
+        delay(5000L)
         navigateToHome()
     }
     //background( Brush.verticalGradient(

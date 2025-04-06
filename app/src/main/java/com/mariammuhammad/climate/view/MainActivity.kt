@@ -36,9 +36,11 @@ class MainActivity : ComponentActivity() {  //AccessLocation
             showSplashScreen.value
         }
 
+//        val settingsPrefs = SettingsPrefs(context)
+//        val languageHelper = LanguageHelper(settingsPrefs)
 
         lifecycleScope.launch{
-            delay(2000)
+            delay(3000)
             showSplashScreen.value =false
         }
 

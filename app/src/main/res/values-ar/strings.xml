@@ -25,5 +25,21 @@
     <string name="save_location">إضافة إلى المفضلة</string>
     <string name="language">اللغة</string>
     <string name="empty_alarms">ليس لديك أي تنبيهات</string>
+    <string name="arabic">عربي</string>
+    <string name="english">انجليزي</string>
+    <string name="default_lang">افتراضي</string>
+    <string name="celsius_c">سلسيوس °C</string>
+    <string name="kelvin_k">كلفن °K</string>
+    <string name="fahrenheit_f">فهرنهايت °F</string>
+    <string name="meter_sec">متر/ثانية</string>
+    <string name="mile_hour">ميل/ساعة</string>
+    <string name="map">خريطة</string>
+    <string name="gps">نظام تحديد المواقع (GPS)</string>
+    <string name="temp_unit">وحدة درجة الحرارة</string>
+    <string name="location">الموقع</string>
+    <string name="wind_speed_unit">وحدة سرعة الرياح</string>
+    <string name="favorite">المفضلة</string>
+
+
 
 </resources>
