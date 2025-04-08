@@ -37,7 +37,6 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
-
     private lateinit var homeViewModel: HomeViewModel
     private lateinit var weatherRepository: WeatherRepository
     private lateinit var settingsRepo: ISettingsRepo

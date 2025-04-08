@@ -23,6 +23,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
 @RunWith(AndroidJUnit4::class)
 @MediumTest
 class WeatherLocalDataSourceTest {
@@ -45,7 +46,6 @@ class WeatherLocalDataSourceTest {
     )
 
     private val testAlarm = Alarm(
-        id = 1,
         cityName = "Berlin",
         hour = 2,
         minute = 10

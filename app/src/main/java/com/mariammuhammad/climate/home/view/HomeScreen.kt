@@ -44,6 +44,7 @@ import android.Manifest
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -72,6 +73,7 @@ import com.mariammuhammad.climate.utiles.HelperFunctions.dateTimeFormater
 import com.mariammuhammad.climate.utiles.HelperFunctions.dayFormater
 import com.mariammuhammad.climate.utiles.HelperFunctions.getCountryName
 import com.mariammuhammad.climate.utiles.HelperFunctions.timeFormater
+import com.mariammuhammad.climate.view.MainActivity
 import kotlin.time.Duration
 
 
@@ -85,29 +87,38 @@ private var temperatureUnit = ""
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double?=null) {
+fun HomeScreen(homeViewModel: HomeViewModel, favLat: Double? = null, favLon: Double? = null) {
 
     var context = LocalContext.current
     val snackBarHostState = remember { SnackbarHostState() }
-       val message by homeViewModel.showMessage.collectAsState(false)
+    val message by homeViewModel.showMessage.collectAsState(null)
     val snackbarHostState = remember { SnackbarHostState() }
     val currentWeather by homeViewModel.currentWeather.collectAsState()
     val nextDaysWeather by homeViewModel.nextDaysWeather.collectAsState()
     val locationPermissionManager = LocationPermissionManager(context)
-//    val storedCurrentWeather by homeViewModel.storedCurrentWeather.collectAsState()
-//    val storedNextDaysWeather by homeViewModel.storedNextDaysWeather.collectAsState()
+    val storedCurrentWeather by homeViewModel.storedCurrentWeather.collectAsState()
+    val storedNextDaysWeather by homeViewModel.storedNextDaysWeather.collectAsState()
     val settingsPrefs = remember {
-        SettingsPrefs(context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE))}
+        SettingsPrefs(context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE))
+    }
+
+
 
     val locationUpdate = LocationUpdate(context)
 
+//    LaunchedEffect(key1 = message) {
+//        message?.let {
+//           Toast.makeText(context,"tttt",Toast.LENGTH_SHORT).show()
+//        }
+//    }
+
     homeViewModel.getSavedSettings()
     val tempUnit = homeViewModel.tempUnit.collectAsStateWithLifecycle()
-    val language = homeViewModel.language.collectAsStateWithLifecycle()
-    val locationFinder = homeViewModel.locationFinder.collectAsStateWithLifecycle()
-    val savedLatitude = homeViewModel.savedLatitude.collectAsStateWithLifecycle()
-    val savedLongitude = homeViewModel.savedLongitude.collectAsStateWithLifecycle()
-    val windUnit= homeViewModel.windUnit.collectAsStateWithLifecycle()
+//    val language = homeViewModel.language.collectAsStateWithLifecycle()
+//    val locationFinder = homeViewModel.locationFinder.collectAsStateWithLifecycle()
+//    val savedLatitude = homeViewModel.savedLatitude.collectAsStateWithLifecycle()
+//    val savedLongitude = homeViewModel.savedLongitude.collectAsStateWithLifecycle()
+//    val windUnit= homeViewModel.windUnit.collectAsStateWithLifecycle()
 //     var isLoading by rememberSaveable { mutableStateOf(true) }
 //     var isDataShown by rememberSaveable { mutableStateOf(false) }
 
@@ -116,17 +127,17 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
         homeViewModel.initialize(context)
     }
 
-    LaunchedEffect(Unit) {
-    if(message==true){
-            Log.i("TAG", "snackbar: ")
-
-            snackbarHostState.showSnackbar(
-
-                message = "Showing cached data (offline)",
-                    duration = SnackbarDuration.Long
-            )
-        }
-    }
+//    LaunchedEffect(Unit) {
+//        if (message == true) {
+//            Log.i("TAG", "snackbar: ")
+//
+//            snackbarHostState.showSnackbar(
+//
+//                message = "Showing cached data (offline)",
+//                duration = SnackbarDuration.Long
+//            )
+//        }
+//    }
 
     when (tempUnit.value) {
         "imperial" -> {
@@ -146,7 +157,6 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
     }
 
 
-
     val launcherActivity = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -158,7 +168,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                             it.latitude,
                             it.longitude,
                             settingsPrefs.getTemperatureUnit(),
-                          //  Constants.UNITS_CELSIUS,
+                            //  Constants.UNITS_CELSIUS,
                             Constants.LANGUAGE_EN
                         )
                     }
@@ -171,6 +181,8 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
         }
     }
 
+    val activity = LocalActivity.current as MainActivity
+
     LaunchedEffect(Unit) {
         if (favLat != null && favLon != null) {
             homeViewModel.loadData(
@@ -178,26 +190,39 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
                 favLon,
                 settingsPrefs.getTemperatureUnit(),
                 settingsPrefs.getLanguage(),
-                )
+            )
         } else {
-            if (locationPermissionManager.isLocationPermissionGranted()) {
-                if (locationUpdate.isLocationEnabled()) {
-                    locationUpdate.getLastLocation { location ->
-                        location?.let {
-                            homeViewModel.loadData(
-                                it.latitude,
-                                it.longitude,
-                                settingsPrefs.getTemperatureUnit(), //Constants.UNITS_CELSIUS,
-                                settingsPrefs.getLanguage(),
-                            )
+            if (activity.myLat != null && activity.myLong != null) {
+                Log.d("````TAG````", "HomeScreen: not null")
+                homeViewModel.loadData(
+                    activity.myLat!!,
+                    activity.myLong!!,
+                    settingsPrefs.getTemperatureUnit(), //Constants.UNITS_CELSIUS,
+                    settingsPrefs.getLanguage(),
+                )
+            } else {
+                if (locationPermissionManager.isLocationPermissionGranted()) {
+                    if (locationUpdate.isLocationEnabled()) {
+                        locationUpdate.getLastLocation { location ->
+                            location?.let {
+                                activity.myLat = location.latitude
+                                activity.myLong = location.longitude
+                                homeViewModel.loadData(
+                                    it.latitude,
+                                    it.longitude,
+                                    settingsPrefs.getTemperatureUnit(), //Constants.UNITS_CELSIUS,
+                                    settingsPrefs.getLanguage(),
+                                )
+                            }
                         }
+                    } else {
+                        locationUpdate.promptEnableLocationSettings()
                     }
                 } else {
-                    locationUpdate.promptEnableLocationSettings()
+                    launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 }
-            } else {
-                launcherActivity.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
+
         }
     }
 
@@ -279,7 +304,7 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
             Box(
                 modifier = Modifier.fillMaxSize(),
 
-            )
+                )
             {
                 SnackbarHost(
                     hostState = snackbarHostState,
@@ -531,62 +556,61 @@ fun HomeScreen(homeViewModel: HomeViewModel,favLat: Double?=null, favLon: Double
 }
 
 
-
-    @Composable
-    fun WeatherDetails(weatherDetails: CurrentWeather) {
-        Column(
+@Composable
+fun WeatherDetails(weatherDetails: CurrentWeather) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                WeatherDetailItem(
-                    label = stringResource(R.string.pressure),
-                    imageResource = R.drawable.pressure2,
-                    value = "${weatherDetails.main.pressure} "+stringResource(R.string.hpa)
-                )
+            WeatherDetailItem(
+                label = stringResource(R.string.pressure),
+                imageResource = R.drawable.pressure2,
+                value = "${weatherDetails.main.pressure} " + stringResource(R.string.hpa)
+            )
 
-                WeatherDetailItem(
-                    label = stringResource(R.string.humidity),
-                    imageResource = R.drawable.humd,
-                    value = "${weatherDetails.main.humidity}%"
-                )
+            WeatherDetailItem(
+                label = stringResource(R.string.humidity),
+                imageResource = R.drawable.humd,
+                value = "${weatherDetails.main.humidity}%"
+            )
 
-                WeatherDetailItem(
-                    label = stringResource(R.string.clouds),
-                    imageResource = R.drawable.clouds,
-                    value = "${weatherDetails.clouds.all}%"
-                )
+            WeatherDetailItem(
+                label = stringResource(R.string.clouds),
+                imageResource = R.drawable.clouds,
+                value = "${weatherDetails.clouds.all}%"
+            )
 
 
-            }
+        }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
 
-                WeatherDetailItem(
-                    label = stringResource(R.string.ultraviolet),
-                    imageResource = R.drawable.ultraviolet,
-                    value = "${weatherDetails.main.feelsLike}"
-                )
+            WeatherDetailItem(
+                label = stringResource(R.string.ultraviolet),
+                imageResource = R.drawable.ultraviolet,
+                value = "${weatherDetails.main.feelsLike}"
+            )
 
-                WeatherDetailItem(
-                    label = stringResource(R.string.wind_speed),
-                    imageResource = R.drawable.wind2,
-                    value = "${weatherDetails.wind.speed} "+ windSpeedUnit //
-                )
-            }
+            WeatherDetailItem(
+                label = stringResource(R.string.wind_speed),
+                imageResource = R.drawable.wind2,
+                value = "${weatherDetails.wind.speed} " + windSpeedUnit //
+            )
         }
     }
+}
 
 
 @Composable
@@ -678,7 +702,7 @@ fun DailyForecastItem(day: ListDaysDetails) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
-            )  {
+            ) {
                 Text(
                     text = day.dt.dayFormater(),
                     color = Color.White,
@@ -692,7 +716,7 @@ fun DailyForecastItem(day: ListDaysDetails) {
                 contentDescription = "Weather icon",
                 modifier = Modifier.size(40.dp),
 
-            )
+                )
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -701,7 +725,7 @@ fun DailyForecastItem(day: ListDaysDetails) {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = stringResource(R.string.feels_like)+" ${day.main.feelsLike.toInt()}°",
+                    text = stringResource(R.string.feels_like) + " ${day.main.feelsLike.toInt()}°",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -710,7 +734,7 @@ fun DailyForecastItem(day: ListDaysDetails) {
     }
 }
 
- @Composable
+@Composable
 fun ErrorScreen(error: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier

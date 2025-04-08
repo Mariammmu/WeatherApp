@@ -36,8 +36,8 @@ class HomeViewModel(val repo: WeatherRepository, val settingsRepo: ISettingsRepo
     private val _storedNextDaysWeather = MutableStateFlow<Response<NextDaysWeather>>(Response.Loading)
     val storedNextDaysWeather: StateFlow<Response<NextDaysWeather>> = _storedNextDaysWeather
 
-    private val _showMessage = MutableSharedFlow<Boolean>() //Flow<String?>(null) event action
-    val showMessage: SharedFlow<Boolean?> = _showMessage
+    private val _showMessage = MutableSharedFlow<String>() //Flow<String?>(null) event action
+    val showMessage: SharedFlow<String?> = _showMessage
 
     private val _tempUnit = MutableStateFlow("")
     val tempUnit = _tempUnit.asStateFlow()
@@ -94,15 +94,15 @@ class HomeViewModel(val repo: WeatherRepository, val settingsRepo: ISettingsRepo
                         }
                     }
                 } catch (e: Exception) {
-                    _showMessage.emit(true)
+                  //  _showMessage.emit(true)
 
-                    //_showMessage.value = "Network error, showing cached data"
+                    _showMessage.emit( "Network error, showing cached data")
                     loadCachedData(lat, lon)
                 }
             }
             else {
-                _showMessage.emit(true)
-                        // "No internet connection, showing cached data"
+                //_showMessage.emit(true)
+                _showMessage.emit("No internet connection, showing cached data")
                 loadCachedData(lat, lon)
             }
         }

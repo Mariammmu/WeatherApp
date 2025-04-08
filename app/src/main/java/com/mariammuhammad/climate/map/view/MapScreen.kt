@@ -47,6 +47,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.mariammuhammad.climate.R
 import com.mariammuhammad.climate.favorite.viewmodel.FavoriteViewModel
 import com.mariammuhammad.climate.utiles.Constants
+import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
 
 @Composable
@@ -105,29 +106,36 @@ fun MapScreen(favViewModel: FavoriteViewModel) {
                 //                   colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f))
 
             ) {
-//                    Box(
-//                        modifier = Modifier.fillMaxSize(),
-//                        contentAlignment = Alignment.Center
-//                    ) {
-//                        if (next5Days is Response.Loading) {
-//                            CircularProgressIndicator()
-//                        } else {
+
+                LaunchedEffect (next5Days){
+                    when(next5Days){
+                        is Response.Success -> {
+                            favViewModel.addFavoriteCity(
+
+                                next5Days.data.city.copy(name=
+                                LocationUpdate(context)
+                                    .getAddress(context,latLng.latitude, latLng.longitude)
+                                    ?:"Unknown city"
+                                )
+                            )
+
+                        }
+                        else->{
+
+                        }
+                    }
+                }
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Add city name text here
-                    when (next5Days) {
+
+               /*     when (next5Days) {
                         is Response.Success -> {
+                            //next5Days.data.list.first().sys
                             next5Days.data.city?.name?.let { cityName ->
-                                Text(
-                                    text = cityName,
-                                    color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
+
                             }
                         }
 
@@ -146,8 +154,15 @@ fun MapScreen(favViewModel: FavoriteViewModel) {
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
                         }
-                    }
-
+                    } */
+                    Text(
+                        text =  LocationUpdate(context)
+                            .getAddress(context,latLng.latitude, latLng.longitude)?:"Unknown city",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
                     Button(
                         onClick = {
                             favViewModel.getRemote5Days3HoursWeather(
@@ -156,11 +171,12 @@ fun MapScreen(favViewModel: FavoriteViewModel) {
                                 Constants.UNITS_CELSIUS,
                                 Constants.LANGUAGE_EN
                             )
-                            if (next5Days is Response.Success) {
-                                next5Days.data.city?.let {
-                                    favViewModel.addFavoriteCity(next5Days.data.city)
-                                }
-                            }
+
+//                            if (next5Days is Response.Success) {
+//                                next5Days.data.city?.let {
+//                                    favViewModel.addFavoriteCity(next5Days.data.city)
+//                                }
+                           // }
                         }
                     ) {
                         Icon(Icons.Outlined.Favorite, contentDescription = "Add to favorite")

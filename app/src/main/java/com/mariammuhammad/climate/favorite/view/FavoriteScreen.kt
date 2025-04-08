@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +31,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -107,7 +113,38 @@ fun FavCityItem(city: City, favViewModel: FavoriteViewModel, onCardClick: (Doubl
     val countryName = getCountryName(city.country)
     val lat = city.coord.lat
     val lon = city.coord.lon
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete City", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Are you sure you want to delete ${city.name}? 🗑️❌")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row {
+                        Text("This action cannot be undone. 😞")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        favViewModel.removeFavoriteCity(city)
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Yes, Delete")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
     Card(
         modifier = Modifier
             .padding(10.dp)
@@ -141,7 +178,9 @@ fun FavCityItem(city: City, favViewModel: FavoriteViewModel, onCardClick: (Doubl
                     tint = Color.White,
                     modifier = Modifier
                         .clickable {
-                            favViewModel.removeFavoriteCity(city)
+                            showDeleteDialog = true
+
+                            //favViewModel.removeFavoriteCity(city)
                         }
                         .padding(start = 8.dp)
                 )

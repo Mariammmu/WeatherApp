@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.TimePickerDialog
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
+import androidx.activity.compose.LocalActivity
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,12 +75,17 @@ import com.mariammuhammad.climate.model.data.AlarmCreationState
 import com.mariammuhammad.climate.utiles.Constants
 import com.mariammuhammad.climate.utiles.LocationUpdate
 import com.mariammuhammad.climate.utiles.Response
+import com.mariammuhammad.climate.view.MainActivity
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.Calendar
 import java.util.Date
+import java.util.GregorianCalendar
 import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WeatherAlarmScreen(
     alertViewModel: AlertViewModel,
@@ -87,7 +95,7 @@ fun WeatherAlarmScreen(
     val alarmState = rememberAlarmCreationState()
 
     val context = LocalContext.current
-
+    val activity = LocalActivity.current as MainActivity
 
 
 
@@ -101,14 +109,23 @@ fun WeatherAlarmScreen(
         alarmState = alarmState,
         onAddAlarmClick = { showAddAlarmDialog = true },
         onDismissDialog = { showAddAlarmDialog = false },
-        onSaveAlarm = { alarm ->
+        onSaveAlarm = { alarm, state ->
             showAddAlarmDialog = false
 
             val locationUpdate = LocationUpdate(context)
 
-            locationUpdate.getLastLocation { location ->
+            Log.i("TAG", "WeatherAlarmScreen: locationUpdate")
+            if(activity.myLat != null && activity.myLong!= null){
+                val alarmTime= convertToUnixTime(
+                    state.startDate ?: 0,
+                    state.startTime?.first ?: 0,
+                    state.startTime?.second ?: 0,
+                    state.startTime?.third?: true
+                )
+                Log.i("TAG", "WeatherAlarmScreen:  Alarm time ${alarmTime}")
 
-                val delay: Long = alarm.hour / 1000L - System.currentTimeMillis() / 1000L
+                val delay: Long =
+                    alarmTime - Instant.now().epochSecond
                 val constraints = Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .setRequiresCharging(false)
@@ -116,19 +133,21 @@ fun WeatherAlarmScreen(
 
 
                 val data = Data.Builder()
-                    .putDouble(Constants.LATITUDE, location?.latitude ?: 0.0)
-                    .putDouble(Constants.LONGITUDE, location?.longitude ?: 0.0)
+                    .putDouble(Constants.LATITUDE, activity.myLat!!)
+                    .putDouble(Constants.LONGITUDE, activity.myLong!!)
                     .build()
 
                 val finalAlarm = alarm.copy(
                     cityName = locationUpdate.getAddress(
                         context,
-                        location?.latitude?:0.0,
-                        location?.longitude?:0.0
-                    )?: ""
+                        activity.myLat!!,
+                        activity.myLong!!
+                    ) ?: ""
                 )
 
                 alertViewModel.addAlarm(finalAlarm)
+
+                Log.i("TAG", "WeatherAlarmScreen: ${delay}")
 
                 val request = OneTimeWorkRequestBuilder<MyWorkManager>()
                     .setInitialDelay(delay, TimeUnit.SECONDS)
@@ -137,6 +156,61 @@ fun WeatherAlarmScreen(
                     .build()
                 WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
 
+            }else{
+                locationUpdate.getLastLocation { location ->
+                    activity.myLat = location?.latitude
+                    activity.myLong = location?.longitude
+
+                    Log.i("TAG", "WeatherAlarmScreen: convert ${state.startDate}")
+                    Log.i("TAG", "WeatherAlarmScreen: convert ${state.startTime?.first}")
+                    Log.i("TAG", "WeatherAlarmScreen: convert ${state.startTime?.second}")
+                    Log.i("TAG", "WeatherAlarmScreen: convert ${state.startTime?.third}")
+
+                    Log.i("TAG", "WeatherAlarmScreen: ${TimeZone.getDefault().id}")
+                    Log.i("TAG", "WeatherAlarmScreen: ${Locale.getDefault().country}")
+
+
+                    val alarmTime= convertToUnixTime(
+                        state.startDate ?: 0,
+                        state.startTime?.first ?: 0,
+                        state.startTime?.second ?: 0,
+                        state.startTime?.third?: true
+                    )
+                    Log.i("TAG", "WeatherAlarmScreen:  Alarm time ${alarmTime}")
+
+                    val delay: Long =
+                        alarmTime - Instant.now().epochSecond
+                    val constraints = Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .setRequiresCharging(false)
+                        .build()
+
+
+                    val data = Data.Builder()
+                        .putDouble(Constants.LATITUDE, location?.latitude ?: 0.0)
+                        .putDouble(Constants.LONGITUDE, location?.longitude ?: 0.0)
+                        .build()
+
+                    val finalAlarm = alarm.copy(
+                        cityName = locationUpdate.getAddress(
+                            context,
+                            location?.latitude ?: 0.0,
+                            location?.longitude ?: 0.0
+                        ) ?: ""
+                    )
+
+                    alertViewModel.addAlarm(finalAlarm)
+
+                    Log.i("TAG", "WeatherAlarmScreen: ${delay}")
+
+                    val request = OneTimeWorkRequestBuilder<MyWorkManager>()
+                        .setInitialDelay(delay, TimeUnit.SECONDS)
+                        .setInputData(data)
+                        .setConstraints(constraints)
+                        .build()
+                    WorkManager.getInstance(context).enqueue(request)  //question: why enqueue
+
+                }
             }
 
 
@@ -146,6 +220,55 @@ fun WeatherAlarmScreen(
     )
 }
 
+/*fun convertToUnixTime(dateLong: Long, hour: Int, minute: Int, isPM: Boolean): Long {
+    // Convert the long date to a Date object
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = dateLong
+
+    // Set the hour and minute based on the 12-hour format
+    val correctedHour = if (isPM) {
+        // Adjust hour for PM (12 PM is 12, 1 PM is 13, etc.)
+        if (hour == 12) 12 else hour + 12
+    } else {
+        // For AM, 12 AM is midnight (00)
+        if (hour == 12) 0 else hour
+    }
+
+    // Set the hour and minute in the calendar
+    calendar.set(Calendar.HOUR_OF_DAY, correctedHour)
+    calendar.set(Calendar.MINUTE, minute)
+
+    // Get the Unix timestamp in milliseconds
+    return calendar.timeInMillis / 1000 // Convert to seconds
+}
+ */
+
+fun convertToUnixTime(dateLong: Long, hour: Int, minute: Int, isPM: Boolean): Long {
+    // Create a Calendar instance and set it to the date represented by dateLong
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = dateLong
+    Log.d("```TAG```", "convertToUnixTime: ${isPM}")
+    // Adjust the hour based on AM/PM
+    var adjustedHour = hour
+    if (isPM) {
+        // Convert 12-hour format to 24-hour format for PM hours
+        adjustedHour = if (hour == 12) 12 else hour + 12
+    } else {
+        // For AM, we need to handle the case where the hour is 12 (which is midnight in 24-hour format)
+        if (hour == 12) adjustedHour = 0
+    }
+    Log.i("TAG", "convertToUnixTime: ${adjustedHour}")
+    //Log.i("TAG", "convertToUnixTime: minute ${}")
+
+    // Set the calendar's time to the specified hour and minute
+    calendar.set(Calendar.HOUR_OF_DAY, adjustedHour)
+    calendar.set(Calendar.MINUTE, minute)
+    calendar.set(Calendar.SECOND, 0) // Set seconds to 0
+    calendar.set(Calendar.MILLISECOND, 0) // Set milliseconds to 0
+
+    // Return the Unix timestamp (milliseconds since epoch)
+    return calendar.timeInMillis/1000L
+}
 @Composable
 private fun rememberAlarmCreationState() = remember {
     mutableStateOf(
@@ -165,27 +288,25 @@ private fun WeatherAlarmScaffold(
     alarmState: State<AlarmCreationState>,
     onAddAlarmClick: () -> Unit,
     onDismissDialog: () -> Unit,
-    onSaveAlarm: (Alarm) -> Unit,
+    onSaveAlarm: (Alarm, AlarmCreationState) -> Unit,
     onDeleteAlarm: (Alarm) -> Unit
 ) {
-    val context= LocalContext.current
-    val notificationHandler= NotificationHandler(context)
+    val context = LocalContext.current
+    val notificationHandler = NotificationHandler(context)
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU){
-                    if(context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                        ==PackageManager.PERMISSION_GRANTED){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        == PackageManager.PERMISSION_GRANTED
+                    ) {
                         onAddAlarmClick()
 
-                    }
-
-                    else{
+                    } else {
 
                         notificationHandler.showNotificationPermissionDialog()
                     }
-                }
-                else{
+                } else {
                     onAddAlarmClick()
                 }
 
@@ -205,7 +326,11 @@ private fun WeatherAlarmScaffold(
             AddAlarmDialog(
                 state = alarmState.value,
                 onDismiss = onDismissDialog,
-                onSave = onSaveAlarm
+                onSave = { alarm, state ->
+
+                    onSaveAlarm(alarm, state)
+
+                }
             )
         }
     }
@@ -231,6 +356,7 @@ private fun WeatherAlarmContent(
         }
 
         is Response.Failure -> {
+            Log.i("TAG", "WeatherAlarmContent: ${state.error}")
             ErrorMessage(
                 message = "Error loading alarms: ${state.error.localizedMessage}",
             )
@@ -242,7 +368,7 @@ private fun WeatherAlarmContent(
 private fun AddAlarmDialog(
     state: AlarmCreationState,
     onDismiss: () -> Unit,
-    onSave: (Alarm) -> Unit
+    onSave: (Alarm, AlarmCreationState) -> Unit
 ) {
     val currentState = remember { mutableStateOf(state) }
 
@@ -265,8 +391,9 @@ private fun AddAlarmDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    Log.d("```TAG```", "AddAlarmDialog: ${currentState.value.startTime?.third}")
                     val alarm = createAlarmFromState(currentState.value)
-                    onSave(alarm)
+                    onSave(alarm, currentState.value)
                 },
                 enabled = isAlarmStateValid(currentState.value)
             ) {
@@ -350,9 +477,10 @@ fun DatePickerRow(
             tint = Color.Unspecified
         )
         Text(
-            text = "$label ${selectedDate?.let { dateFormatter.format(Date(it)) } ?: stringResource(
-                R.string.select_a_date
-            )
+            text = "$label ${
+                selectedDate?.let { dateFormatter.format(Date(it)) } ?: stringResource(
+                    R.string.select_a_date
+                )
             }",
             modifier = Modifier.weight(1f),
             color = colorResource(R.color.background),
@@ -550,7 +678,9 @@ private fun AlarmItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${hourIn12HourFormat}:${alarm.minute.toString().padStart(2, '0')} $amOrPm",
+                    text = "${hourIn12HourFormat}:${
+                        alarm.minute.toString().padStart(2, '0')
+                    } $amOrPm",
                     style = MaterialTheme.typography.titleMedium
                 )
                 IconButton(onClick = onDelete) {
@@ -593,7 +723,6 @@ private fun ErrorMessage(message: String) {
 
 private fun createAlarmFromState(state: AlarmCreationState): Alarm {
     return Alarm(
-        id = 0,
         cityName = "Selected Location",
 //        lat = ,
 //        lon = 0.0,

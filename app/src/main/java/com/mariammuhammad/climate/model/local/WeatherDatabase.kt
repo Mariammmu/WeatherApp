@@ -43,6 +43,7 @@ import com.mariammuhammad.climate.utiles.WindConverter
                     val instance = Room.databaseBuilder( //creates the actual Room database. It takes: 3 params
                         context.applicationContext,
                         WeatherDataBase::class.java,"weather_database")
+                        .fallbackToDestructiveMigration()
                         .build()
                     INSTANCE = instance
                     instance

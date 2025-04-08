@@ -36,9 +36,9 @@ class SettingsViewModel(private val repository: SettingsRepo) : ViewModel() {
         viewModelScope.launch {
             try {
 
-                 _temperatureUnit.value = Response.Success(
-                        repository.getTemperatureUnit()
-                        )
+                _temperatureUnit.value = Response.Success(
+                    repository.getTemperatureUnit()
+                )
 
                 _language.value = Response.Success(
                     repository.getLanguage()
@@ -128,7 +128,6 @@ class SettingsViewModel(private val repository: SettingsRepo) : ViewModel() {
         }
     }
 }
-
 
 
 class SettingsViewModelFactory(
